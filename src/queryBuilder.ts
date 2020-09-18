@@ -168,6 +168,7 @@ export class QueryBuilder {
     /* Generates a SEARCH query
     Example :
     SEARCH NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
+    OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "fuzzysearch")
     LET score = bm25(doc) + (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
     FILTER score >= 20
     SORT score DESC
@@ -175,14 +176,15 @@ export class QueryBuilder {
     const SCORE_THRESHOLD = 20;
     const queryNumber = parseInt(query) || 0
     const fuzzy = (attribute: string, threshold: number, doc: string | null = null) =>
-      `NGRAM_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}, "fuzzysearch")`
-    // Example: NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
+      `NGRAM_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}, "fuzzysearch")
+      OR ANALYZER(STARTS_WITH(${doc || docName}.${attribute}, LOWER("${query}")), "fuzzysearch")`
+    // Example: NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch") OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "fuzzysearch")
     const fuzzys = (list: any[], doc: string | null = null) => list.map((el) => fuzzy(el.name, el.threshold, doc)).join(' OR ')
 
     const score = (attribute: string, doc: string | null = null) => 
       `(STARTS_WITH(LOWER(${doc || docName}.${attribute}), LOWER("${query}")) ? ${SCORE_THRESHOLD} : 0)`
     // Example: (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
-    const scores = (list: any[]) => list.map((el) => score(el.name, el.docName || null)).join(' + ')
+    const scores = (list: any[], doc: string | null = null) => list.map((el) => score(el.name, doc)).join(' + ')
 
     const personSearch = (doc: string = docName) => {
       const fuzzySearchFields: any[] = [
@@ -193,7 +195,7 @@ export class QueryBuilder {
       ];
       return `${fuzzys(fuzzySearchFields, doc)}
       OR ${doc}.personID == ${queryNumber}
-      LET score = bm25(${doc}) + (${doc}.personID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${scores(fuzzySearchFields)}
+      LET score = bm25(${doc}) + (${doc}.personID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${scores(fuzzySearchFields, doc)}
       FILTER score >= ${SCORE_THRESHOLD}
       SORT score DESC`
     }
