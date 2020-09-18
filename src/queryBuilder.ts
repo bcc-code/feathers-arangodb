@@ -165,6 +165,13 @@ export class QueryBuilder {
   }
 
   addSearch(query: any, docName: string = "doc") {
+    /* Generates a SEARCH query
+    Example :
+    SEARCH NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
+    LET score = bm25(doc) + (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
+    FILTER score >= 20
+    SORT score DESC
+    */
     const SCORE_THRESHOLD = 20;
     const queryNumber = parseInt(query) || 0
     const fuzzy = (attribute: string, threshold: number, doc: string | null = null) =>
@@ -210,13 +217,13 @@ export class QueryBuilder {
         OR ${docName}.churchID == ${queryNumber}
         LET score = bm25(${docName}) + (${docName}.churchID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${score('name')}
         FILTER score >= ${SCORE_THRESHOLD}
-        SORT bm25(${docName}) DESC`);
+        SORT score DESC`);
         break;
       default:
         this.search = aql.literal(`${fuzzy('name', 0.6)}
         LET score = bm25(${docName}) + ${score('name')}
         FILTER bm25(${docName}) >= ${SCORE_THRESHOLD}
-        SORT bm25(${docName}) DESC`);
+        SORT score DESC`);
         break;
     }
   }
