@@ -168,41 +168,45 @@ export class QueryBuilder {
     switch(this._collection) {
       case 'person':
         this.search = aql.literal(
-          `NGRAM_MATCH(${docName}.firstName, "${query}", 0.6, "trigram")
+          `NGRAM_MATCH(${docName}.firstName, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(${docName}.firstName, "${query}")
-          OR NGRAM_MATCH(${docName}.lastName, "${query}", 0.6, "trigram")
+          OR NGRAM_MATCH(${docName}.lastName, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(${docName}.lastName, "${query}")
-          OR NGRAM_MATCH(${docName}.displayName, "${query}", 0.5, "trigram")
+          OR NGRAM_MATCH(${docName}.displayName, "${query}", 0.5, "fuzzysearch")
+          OR ${docName}.email, "${query}", 0.6, "fuzzysearch")
+          OR STARTS_WITH(${docName}.email, "${query}")
           OR ${docName}.personID == ${parseInt(query) || 0}
           SORT bm25(${docName}) DESC`);
         break;
       case 'person_role':
         this.search = aql.literal(
           `${docName}._from IN ( FOR r IN person_view SEARCH
-          NGRAM_MATCH(r.firstName, "${query}", 0.6, "trigram")
+          NGRAM_MATCH(r.firstName, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(r.firstName, "${query}")
-          OR NGRAM_MATCH(r.lastName, "${query}", 0.6, "trigram")
+          OR NGRAM_MATCH(r.lastName, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(r.lastName, "${query}")
-          OR NGRAM_MATCH(r.displayName, "${query}", 0.5, "trigram")
+          OR NGRAM_MATCH(r.displayName, "${query}", 0.5, "fuzzysearch")
+          OR r.email, "${query}", 0.6, "fuzzysearch")
+          OR STARTS_WITH(r.email, "${query}")
           OR r.personID == ${parseInt(query) || 0}
           SORT bm25(r) DESC RETURN r._id )
           SORT bm25(${docName}) DESC`);
         break;
       case 'country':
-        this.search = aql.literal(`NGRAM_MATCH(${docName}.nameEn, "${query}", 0.6, "trigram")
+        this.search = aql.literal(`NGRAM_MATCH(${docName}.nameEn, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(${docName}.nameEn, "${query}")
-          OR NGRAM_MATCH(${docName}.nameNo, "${query}", 0.6, "trigram")
+          OR NGRAM_MATCH(${docName}.nameNo, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(${docName}.nameNo, "${query}")
           SORT bm25(${docName}) DESC`);
         break;
       case 'org':
-        this.search = aql.literal(`NGRAM_MATCH(${docName}.name, "${query}", 0.6, "trigram")
+        this.search = aql.literal(`NGRAM_MATCH(${docName}.name, "${query}", 0.6, "fuzzysearch")
           OR STARTS_WITH(${docName}.name, "${query}")
           OR ${docName}.churchID == ${parseInt(query) || 0}
           SORT bm25(${docName}) DESC`);
         break;
       default:
-        this.search = aql.literal(`NGRAM_MATCH(${docName}.name, "${query}", 0.8, "trigram")
+        this.search = aql.literal(`NGRAM_MATCH(${docName}.name, "${query}", 0.8, "fuzzysearch")
           OR STARTS_WITH(${docName}.name, "${query}")
           SORT bm25(${docName}) DESC`);
         break;
