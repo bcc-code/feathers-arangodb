@@ -1,6 +1,6 @@
 {
-  "name": "feathers-arangodb",
-  "version": "2.2.0",
+  "name": "@bcc-its/feathers-arangodb",
+  "version": "1.0.5",
   "description": "ArangoDB Service/Adapter for FeathersJS",
   "homepage": "https://github.com/AnatidaeProject/feathers-arangodb",
   "main": "lib/",
@@ -8,7 +8,7 @@
   "author": "Brian McBride",
   "repository": {
     "type": "git",
-    "url": "git://github.com/Brian-McBride/feathers-arangodb.git"
+    "url": "git://github.com/bcc-its/feathers-arangodb.git"
   },
   "bugs": {
     "url": "https://github.com/Brian-McBride/feathers-arangodb/issues"
@@ -25,7 +25,6 @@
     "service"
   ],
   "scripts": {
-    "publish": "git push origin --tags && npm run changelog && git push origin",
     "changelog": "github_changelog_generator && git add CHANGELOG.md && git commit -am \"Updating changelog\"",
     "release:patch": "npm version patch && npm publish",
     "release:minor": "npm version minor && npm publish",
