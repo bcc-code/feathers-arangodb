@@ -165,46 +165,67 @@ export class QueryBuilder {
   }
 
   addSearch(query: any, docName: string = "doc") {
+    /* Generates a SEARCH query
+    Example :
+    SEARCH NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
+    LET score = bm25(doc) + (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
+    FILTER score >= 20
+    SORT score DESC
+    */
+    const SCORE_THRESHOLD = 20;
+    const queryNumber = parseInt(query) || 0
+    const fuzzy = (attribute: string, threshold: number, doc: string | null = null) =>
+      `NGRAM_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}, "fuzzysearch")`
+    // Example: NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
+    const fuzzys = (list: any[], doc: string | null = null) => list.map((el) => fuzzy(el.name, el.threshold, doc)).join(' OR ')
+
+    const score = (attribute: string, doc: string | null = null) => 
+      `(STARTS_WITH(LOWER(${doc || docName}.${attribute}), LOWER("${query}")) ? ${SCORE_THRESHOLD} : 0)`
+    // Example: (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
+    const scores = (list: any[]) => list.map((el) => score(el.name, el.docName || null)).join(' + ')
+
+    const personSearch = (doc: string = docName) => {
+      const fuzzySearchFields: any[] = [
+        { name: 'firstName', threshold: 0.6},
+        { name: 'lastName', threshold: 0.6 },
+        { name: 'displayName', threshold: 0.5 },
+        { name: 'email', threshold: 0.7 }
+      ];
+      return `${fuzzys(fuzzySearchFields, doc)}
+      OR ${doc}.personID == ${queryNumber}
+      LET score = bm25(${doc}) + (${doc}.personID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${scores(fuzzySearchFields)}
+      FILTER score >= ${SCORE_THRESHOLD}
+      SORT score DESC`
+    }
+
     switch(this._collection) {
       case 'person':
-        this.search = aql.literal(
-          `NGRAM_MATCH(${docName}.firstName, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(${docName}.firstName, "${query}")
-          OR NGRAM_MATCH(${docName}.lastName, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(${docName}.lastName, "${query}")
-          OR NGRAM_MATCH(${docName}.displayName, "${query}", 0.5, "trigram")
-          OR ${docName}.personID == ${parseInt(query) || 0}
-          SORT bm25(${docName}) DESC`);
+        this.search = aql.literal(personSearch())
         break;
       case 'person_role':
         this.search = aql.literal(
           `${docName}._from IN ( FOR r IN person_view SEARCH
-          NGRAM_MATCH(r.firstName, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(r.firstName, "${query}")
-          OR NGRAM_MATCH(r.lastName, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(r.lastName, "${query}")
-          OR NGRAM_MATCH(r.displayName, "${query}", 0.5, "trigram")
-          OR r.personID == ${parseInt(query) || 0}
-          SORT bm25(r) DESC RETURN r._id )
-          SORT bm25(${docName}) DESC`);
+          ${personSearch('r')} RETURN r._id )`);
         break;
       case 'country':
-        this.search = aql.literal(`NGRAM_MATCH(${docName}.nameEn, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(${docName}.nameEn, "${query}")
-          OR NGRAM_MATCH(${docName}.nameNo, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(${docName}.nameNo, "${query}")
-          SORT bm25(${docName}) DESC`);
+        const fuzzySearchFields = [{ name: 'nameEn', threshold: 0.6}, { name: 'nameNo', threshold: 0.6},]
+        this.search = aql.literal(`${fuzzys(fuzzySearchFields)}
+        LET score = bm25(${docName}) + ${scores(fuzzySearchFields)}
+        FILTER score >= ${SCORE_THRESHOLD} 
+        SORT score DESC`);
         break;
       case 'org':
-        this.search = aql.literal(`NGRAM_MATCH(${docName}.name, "${query}", 0.6, "trigram")
-          OR STARTS_WITH(${docName}.name, "${query}")
-          OR ${docName}.churchID == ${parseInt(query) || 0}
-          SORT bm25(${docName}) DESC`);
+        this.search = aql.literal(`${fuzzy('name', 0.6)}
+        OR ${docName}.churchID == ${queryNumber}
+        LET score = bm25(${docName}) + (${docName}.churchID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${score('name')}
+        FILTER score >= ${SCORE_THRESHOLD}
+        SORT score DESC`);
         break;
       default:
-        this.search = aql.literal(`NGRAM_MATCH(${docName}.name, "${query}", 0.8, "trigram")
-          OR STARTS_WITH(${docName}.name, "${query}")
-          SORT bm25(${docName}) DESC`);
+        this.search = aql.literal(`${fuzzy('name', 0.6)}
+        LET score = bm25(${docName}) + ${score('name')}
+        FILTER bm25(${docName}) >= ${SCORE_THRESHOLD}
+        SORT score DESC`);
         break;
     }
   }
