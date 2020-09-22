@@ -28,7 +28,8 @@ export class QueryBuilder {
     "$or",
     "$aql",
     "$resolve",
-    "$search"
+    "$search",
+    "$calculate"
   ];
   bindVars: { [key: string]: any } = {};
   maxLimit = 1000000000; // A billion records...
@@ -126,6 +127,7 @@ export class QueryBuilder {
           break;
         case "$select":
         case "$resolve":
+        case "$calculate":
           break;
         case "$limit":
           this._limit = parseInt(value);
