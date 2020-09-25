@@ -25,10 +25,6 @@
     "service"
   ],
   "scripts": {
-    "changelog": "github_changelog_generator && git add CHANGELOG.md && git commit -am \"Updating changelog\"",
-    "release:patch": "npm version patch && npm publish",
-    "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish",
     "coverage": "jest",
     "test": "npm run coverage",
     "test:watch": "jest --watch",
@@ -54,6 +50,7 @@
     "@types/jest": "^25.2.3",
     "@types/lodash": "^4.14.152",
     "@types/uuid": "^8.0.0",
+    "dotenv": "^8.2.0",
     "eslint": "^7.1.0",
     "jest": "^26.0.1",
     "jest-junit": "^10.0.0",

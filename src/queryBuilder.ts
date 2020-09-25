@@ -28,7 +28,8 @@ export class QueryBuilder {
     "$or",
     "$aql",
     "$resolve",
-    "$search"
+    "$search",
+    "$calculate"
   ];
   bindVars: { [key: string]: any } = {};
   maxLimit = 1000000000; // A billion records...
@@ -126,6 +127,7 @@ export class QueryBuilder {
           break;
         case "$select":
         case "$resolve":
+        case "$calculate":
           break;
         case "$limit":
           this._limit = parseInt(value);
@@ -169,11 +171,11 @@ export class QueryBuilder {
     Example :
     SEARCH NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
     OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "fuzzysearch")
-    LET score = bm25(doc) + (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
-    FILTER score >= 20
+    LET score = bm25(doc) + (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 10 : 0)
+    FILTER score >= 10
     SORT score DESC
     */
-    const SCORE_THRESHOLD = 20;
+    const SCORE_THRESHOLD = 10;
     const queryNumber = parseInt(query) || 0
     const fuzzy = (attribute: string, threshold: number, doc: string | null = null) =>
       `NGRAM_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}, "fuzzysearch")
@@ -191,11 +193,14 @@ export class QueryBuilder {
         { name: 'firstName', threshold: 0.6},
         { name: 'lastName', threshold: 0.6 },
         { name: 'displayName', threshold: 0.5 },
-        { name: 'email', threshold: 0.7 }
       ];
       return `${fuzzys(fuzzySearchFields, doc)}
+      OR ${doc}.email == "${query}"
       OR ${doc}.personID == ${queryNumber}
-      LET score = bm25(${doc}) + (${doc}.personID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${scores(fuzzySearchFields, doc)}
+      LET score = bm25(${doc}) 
+      + (${doc}.personID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) 
+      + (${doc}.email == "${query}" ? ${SCORE_THRESHOLD} : 0)
+      + ${scores(fuzzySearchFields, doc)}
       FILTER score >= ${SCORE_THRESHOLD}
       SORT score DESC`
     }
