@@ -25,10 +25,6 @@
     "service"
   ],
   "scripts": {
-    "changelog": "github_changelog_generator && git add CHANGELOG.md && git commit -am \"Updating changelog\"",
-    "release:patch": "npm version patch && npm publish",
-    "release:minor": "npm version minor && npm publish",
-    "release:major": "npm version major && npm publish",
     "coverage": "jest",
     "test": "npm run coverage",
     "test:watch": "jest --watch",
