@@ -6,6 +6,7 @@ import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 const serviceName = "person";
 const testUser = JSON.parse(process.env.TEST_USER as string)
 const specialCharactersUser = JSON.parse(process.env.TEST_USER_SPECIAL_CHARACTERS as string)
+const trigramEdgeCaseUser = JSON.parse(process.env.TEST_USER_TRIGRAM_EDGECASE as string)
 
 describe(`Feathers search tests on the ${serviceName} service `, () => {
   let app: Application<any>;
@@ -82,5 +83,10 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
   it("Search - Full name with special characters", async () => {
     const results = await service.find({ query: { $search: specialCharactersUser.name } });
     expect(results.some((el: any) => el.personID == specialCharactersUser.personID)).toBeTruthy
+  });
+
+  it("Search - Full name with one wrong character (trigram edge case)", async () => {
+    const results = await service.find({ query: { $search: trigramEdgeCaseUser.name } });
+    expect(results.some((el: any) => el.personID == trigramEdgeCaseUser.personID)).toBeTruthy
   });
 });
