@@ -169,40 +169,34 @@ export class QueryBuilder {
   addSearch(query: any, docName: string = "doc") {
     /* Generates a SEARCH query
     Example :
-    SEARCH NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch")
-    OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "fuzzysearch")
-    LET score = bm25(doc) + (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 10 : 0)
-    FILTER score >= 10
-    SORT score DESC
+    SEARCH ANALYZER(LEVENSHTEIN_MATCH(doc.name, LOWER("myQuery"), 2), "lowercase")
+    OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "lowercase")
+    LET distance = LEVENSHTEIN_DISTANCE(LOWER(doc.name), LOWER("myQuery"))
+    SORT distance
     */
-    const SCORE_THRESHOLD = 10;
     const queryNumber = parseInt(query) || 0
     const fuzzy = (attribute: string, threshold: number, doc: string | null = null) =>
-      `NGRAM_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}, "fuzzysearch")
-      OR ANALYZER(STARTS_WITH(${doc || docName}.${attribute}, LOWER("${query}")), "fuzzysearch")`
-    // Example: NGRAM_MATCH(doc.name, LOWER("myQuery"), 0.6, "fuzzysearch") OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "fuzzysearch")
+      `ANALYZER(LEVENSHTEIN_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}), "lowercase")
+      OR ANALYZER(STARTS_WITH(${doc || docName}.${attribute}, LOWER("${query}")), "lowercase")`
+    // Example: ANALYZER(LEVENSHTEIN_MATCH(doc.name, LOWER("myQuery"), 2), "lowercase") 
+    // OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "lowercase")
     const fuzzys = (list: any[], doc: string | null = null) => list.map((el) => fuzzy(el.name, el.threshold, doc)).join(' OR ')
-
-    const score = (attribute: string, doc: string | null = null) => 
-      `(STARTS_WITH(LOWER(${doc || docName}.${attribute}), LOWER("${query}")) ? ${SCORE_THRESHOLD} : 0)`
-    // Example: (STARTS_WITH(LOWER(doc.name), LOWER("myQuery")) ? 20 : 0)
-    const scores = (list: any[], doc: string | null = null) => list.map((el) => score(el.name, doc)).join(' + ')
+    const distance = (attribute: string, doc: string | null = null) => 
+      `LEVENSHTEIN_DISTANCE(LOWER(${doc || docName}.${attribute}), LOWER("${query}")) `
+    // Example: LEVENSHTEIN_DISTANCE(LOWER(doc.name), LOWER("myQuery"))
+    const distances = (list: any[], doc: string | null = null) => list.map((el) => distance(el.name, doc)).join(' + ')
 
     const personSearch = (doc: string = docName) => {
       const fuzzySearchFields: any[] = [
-        { name: 'firstName', threshold: 0.6},
-        { name: 'lastName', threshold: 0.6 },
-        { name: 'displayName', threshold: 0.5 },
+        { name: 'firstName', threshold: 2 },
+        { name: 'lastName', threshold: 2 },
+        { name: 'displayName', threshold: 3 },
+        { name: 'email', threshold: 2 }
       ];
       return `${fuzzys(fuzzySearchFields, doc)}
-      OR ${doc}.email == "${query}"
       OR ${doc}.personID == ${queryNumber}
-      LET score = bm25(${doc}) 
-      + (${doc}.personID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) 
-      + (${doc}.email == "${query}" ? ${SCORE_THRESHOLD} : 0)
-      + ${scores(fuzzySearchFields, doc)}
-      FILTER score >= ${SCORE_THRESHOLD}
-      SORT score DESC`
+      LET distance = ${distances(fuzzySearchFields, doc)}
+      SORT distance`
     }
 
     switch(this._collection) {
@@ -215,24 +209,21 @@ export class QueryBuilder {
           ${personSearch('r')} RETURN r._id )`);
         break;
       case 'country':
-        const fuzzySearchFields = [{ name: 'nameEn', threshold: 0.6}, { name: 'nameNo', threshold: 0.6},]
+        const fuzzySearchFields = [{ name: 'nameEn', threshold: 2}, { name: 'nameNo', threshold: 2},]
         this.search = aql.literal(`${fuzzys(fuzzySearchFields)}
-        LET score = bm25(${docName}) + ${scores(fuzzySearchFields)}
-        FILTER score >= ${SCORE_THRESHOLD} 
-        SORT score DESC`);
+        LET distance = ${distances(fuzzySearchFields)}
+        SORT distance`);
         break;
       case 'org':
-        this.search = aql.literal(`${fuzzy('name', 0.6)}
+        this.search = aql.literal(`${fuzzy('name', 2)}
         OR ${docName}.churchID == ${queryNumber}
-        LET score = bm25(${docName}) + (${docName}.churchID == ${queryNumber} ? ${SCORE_THRESHOLD} : 0) + ${score('name')}
-        FILTER score >= ${SCORE_THRESHOLD}
-        SORT score DESC`);
+        LET distance = ${distance('name')}
+        SORT distance`);
         break;
       default:
-        this.search = aql.literal(`${fuzzy('name', 0.6)}
-        LET score = bm25(${docName}) + ${score('name')}
-        FILTER bm25(${docName}) >= ${SCORE_THRESHOLD}
-        SORT score DESC`);
+        this.search = aql.literal(`${fuzzy('name', 2)}
+        LET distance = ${distance('name')}
+        SORT distance`);
         break;
     }
   }
