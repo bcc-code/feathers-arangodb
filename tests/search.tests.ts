@@ -30,13 +30,12 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
-    /*testUser = await service.get('178494230', {});
-    specialCharactersUser = await service.get('430126186', {});*/
+    testUser = await service.get('178494230', {});
+    specialCharactersUser = await service.get('430126186', {});
   });
-
+  
   it("Search - PersonID", async () => {
-    const results = await service.find({ query: { $search: 25107 } });
-    console.log(results);
+    const results = await service.find({ query: { $search: testUser.personID } });
     expect(results[0].personID).to.eq(testUser.personID);
   });
 
@@ -46,7 +45,7 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
   });
 
   it("Search - Full name no error", async () => {
-    const results = await service.find({ query: { $search: testUser.name } });
+    const results = await service.find({ query: { $search: testUser.displayName } });
     expect(results[0].personID).to.eq(testUser.personID);
   });
 
