@@ -15,7 +15,6 @@ import {
 import _isEmpty from "lodash/isEmpty";
 import isString from "lodash/isString";
 import omit from "lodash/omit";
-import { uuid } from "uuidv4";
 import { AutoDatabse } from "./auto-database";
 import { QueryBuilder } from "./queryBuilder";
 import { GraphVertexCollection } from "arangojs/graph";
@@ -292,17 +291,6 @@ export class DbService<T> {
     return params;
   }
 
-  public fixKeySend<T>(data: T | T[]): Partial<T> | Array<Partial<T>> {
-    const aData: any[] = Array.isArray(data) ? data : [data];
-    if (aData.length < 1) {
-      return aData;
-    }
-    return aData.map((item: any) => {
-      const id = item[this._id] || uuid();
-      return { _key: id, ...(omit(item, "_id", "_rev", "_key") as Partial<T>) };
-    }) as Array<Partial<T>>;
-  }
-
   public fixKeyReturn(item: any): any {
     const idObj: any = {};
 
@@ -432,7 +420,7 @@ export class DbService<T> {
     data: Partial<any> | Array<Partial<any>>,
     params: Params
   ) {
-    data = this.fixKeySend(data);
+    data = Array.isArray(data) ? data : [data]
     const { database, collection } = await this.connect();
     const queryBuilder = new QueryBuilder(params);
 
