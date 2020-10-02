@@ -1,0 +1,12 @@
+{
+    "mochaExplorer.files": [
+        "./tests/*.ts"
+    ],
+    "mochaExplorer.require": "ts-node/register",
+    "mochaExplorer.mochaPath": "./node_modules/mocha",
+    "mochaExplorer.cwd": "./",
+    "mochaExplorer.debuggerConfig": "",
+    "mochaExplorer.env": {
+        "NODE_ENV": "test"
+    },
+}
