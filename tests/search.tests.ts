@@ -12,7 +12,6 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
   let service: IArangoDbService<any>;
 
   before(async () => {
-    //await importDB();
     app = feathers();
     app.use(
       `/${serviceName}`,
