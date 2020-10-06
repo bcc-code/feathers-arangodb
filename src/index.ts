@@ -64,12 +64,12 @@ export interface IGraphOptions {
 export interface IOptions {
   id?: string;
   expandData?: boolean;
-  collection: 
+  collection:
     | DocumentCollection
     | GraphVertexCollection
     | string
     | Promise<DocumentCollection | GraphVertexCollection>;
-  view?: 
+  view?:
     | View
     | string
     | Promise<View>;
@@ -401,17 +401,37 @@ export class DbService<T> {
     const { database, collection } = await this.connect();
     const queryBuilder = new QueryBuilder(params);
     queryBuilder.addFilter("_key", id, "doc", "AND");
+
     const query: AqlQuery = aql.join(
       [
+        collection.name == 'person' ? aql`WITH person,org,relation,affiliation,role`: aql``,
         aql`FOR doc IN ${collection}`,
         queryBuilder.filter
           ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
           : aql``,
-        queryBuilder.returnFilter,
+        collection.name == 'person'
+        ?this.AddGraphLogicForPerson()
+        :queryBuilder.returnFilter,
       ],
       " "
     );
     return this._returnMap(database, query, `No record found for id '${id}'`);
+  }
+
+  public AddGraphLogicForPerson() {
+    return aql.join([aql`let children = (FOR v IN 1..1 INBOUND doc relation RETURN v)`,
+                    aql`let parents = (FOR v,e IN 1..1 OUTBOUND doc relation FILTER e.type == "childOf" RETURN v)`,
+                    aql`let spouse = (FOR v,e IN 1..1 OUTBOUND doc relation filter e.type == "spouse" RETURN v)`,
+                    aql`let affiliations = (FOR v,e IN 1..1 OUTBOUND doc affiliation RETURN merge (v, {startDate: e.startDate}))`,
+                    aql`let roles = (FOR v,e IN 1..1 OUTBOUND doc person_role RETURN merge(v,{context:e}))`,
+                    aql`let related = {}`,
+                    aql`let personWithChildren = merge (related, {children: children})`,
+                    aql`let addParents =  merge (personWithChildren, {parents: parents})`,
+                    aql`let addSpouse =  merge (addParents, {spouse: spouse})`,
+                    aql`let addAffiliations =  merge (addSpouse, {affiliations: affiliations})`,
+                    aql`let addRolesToOtherRelatedObjects =  merge (addAffiliations, {roles: roles})`,
+                    aql`RETURN merge(doc,{related:addRolesToOtherRelatedObjects})`
+                    ], " ")
   }
 
   public async create(
