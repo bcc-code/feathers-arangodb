@@ -357,7 +357,7 @@ export class DbService<T> {
     const queryBuilder = new QueryBuilder(params, collection.name);
     const query = aql.join(
       [
-        aql`FOR doc in ${queryBuilder.search ? view :collection}`,
+        aql`FOR doc in ${queryBuilder.search ? view : collection}`,
         queryBuilder.search
           ? aql.join([aql`SEARCH`, queryBuilder.search], " ")
           : aql``,
@@ -384,8 +384,6 @@ export class DbService<T> {
     console.log("DEBUG - aql:", query.query);
 
     if (!_isEmpty(this._paginate)) {
-      // console.log("DEBUG -  params.query.$limit:", params.query?.$limit);
-      // console.log("DEBUG - result.data:", JSON.stringify(result.data));
 
       return {
         total: result.total,

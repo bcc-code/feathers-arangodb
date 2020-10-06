@@ -2,7 +2,7 @@
 Extends the ArangoDB Database Class to offer helper functions.
  */
 import { Database } from "arangojs/database";
-import { DocumentCollection, } from "arangojs/collection";
+import { DocumentCollection } from "arangojs/collection";
 import { View, ViewDescription } from "arangojs/view";
 import { Config } from "arangojs/connection";
 import { Graph, GraphVertexCollection } from "arangojs/graph";
