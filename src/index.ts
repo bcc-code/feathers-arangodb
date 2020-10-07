@@ -64,12 +64,12 @@ export interface IGraphOptions {
 export interface IOptions {
   id?: string;
   expandData?: boolean;
-  collection: 
+  collection:
     | DocumentCollection
     | GraphVertexCollection
     | string
     | Promise<DocumentCollection | GraphVertexCollection>;
-  view?: 
+  view?:
     | View
     | string
     | Promise<View>;
@@ -351,12 +351,20 @@ export class DbService<T> {
     return result.length > 1 || !removeArray ? result : result[0];
   }
 
-  public async find(params: Params): Promise<any[] | Paginated<any>> {
+  public async find(params: Params,existingQuery?:QueryBuilder): Promise<any[] | Paginated<any>> {
     let { database, collection, view} = await this.connect();
     params = this._injectPagination(params);
-    const queryBuilder = new QueryBuilder(params, collection.name);
+
+    let queryBuilder =new QueryBuilder(params,collection.name);
+    if (existingQuery) {
+      queryBuilder =  existingQuery
+    }
+
     const query = aql.join(
       [
+        queryBuilder.withStatement
+        ? queryBuilder.withStatement
+        : aql``,
         aql`FOR doc in ${queryBuilder.search ? view : collection}`,
         queryBuilder.search
           ? aql.join([aql`SEARCH`, queryBuilder.search], " ")
@@ -397,12 +405,20 @@ export class DbService<T> {
     return result;
   }
 
-  public async get(id: Id, params: Params) {
+  public async get(id: Id, params: Params, existingQuery?:QueryBuilder) {
     const { database, collection } = await this.connect();
-    const queryBuilder = new QueryBuilder(params);
+    let queryBuilder =new QueryBuilder(params);
+    if (existingQuery) {
+      queryBuilder =  existingQuery
+    }
+
     queryBuilder.addFilter("_key", id, "doc", "AND");
+
     const query: AqlQuery = aql.join(
       [
+        queryBuilder.withStatement
+        ? queryBuilder.withStatement
+        : aql``,
         aql`FOR doc IN ${collection}`,
         queryBuilder.filter
           ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
@@ -413,6 +429,7 @@ export class DbService<T> {
     );
     return this._returnMap(database, query, `No record found for id '${id}'`);
   }
+
 
   public async create(
     data: Partial<any> | Array<Partial<any>>,
