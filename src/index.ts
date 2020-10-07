@@ -390,9 +390,6 @@ export class DbService<T> {
     )) as any;
 
     console.log("DEBUG - aql:", query.query);
-    console.log('database:',database)
-    console.log('paginate:',this._paginate)
-
 
     if (!_isEmpty(this._paginate)) {
 
