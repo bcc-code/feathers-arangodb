@@ -351,12 +351,20 @@ export class DbService<T> {
     return result.length > 1 || !removeArray ? result : result[0];
   }
 
-  public async find(params: Params): Promise<any[] | Paginated<any>> {
+  public async find(params: Params,existingQuery?:QueryBuilder): Promise<any[] | Paginated<any>> {
     let { database, collection, view} = await this.connect();
     params = this._injectPagination(params);
-    const queryBuilder = new QueryBuilder(params, collection.name);
+
+    let queryBuilder =new QueryBuilder(params,collection.name);
+    if (existingQuery) {
+      queryBuilder =  existingQuery
+    }
+
     const query = aql.join(
       [
+        queryBuilder.withStatement
+        ? queryBuilder.withStatement
+        : aql``,
         aql`FOR doc in ${queryBuilder.search ? view : collection}`,
         queryBuilder.search
           ? aql.join([aql`SEARCH`, queryBuilder.search], " ")
@@ -382,6 +390,9 @@ export class DbService<T> {
     )) as any;
 
     console.log("DEBUG - aql:", query.query);
+    console.log('database:',database)
+    console.log('paginate:',this._paginate)
+
 
     if (!_isEmpty(this._paginate)) {
 
@@ -408,7 +419,9 @@ export class DbService<T> {
 
     const query: AqlQuery = aql.join(
       [
-        collection.name == 'person' ? aql`WITH person,org,relation,affiliation,role`: aql``,
+        queryBuilder.withStatement
+        ? queryBuilder.withStatement
+        : aql``,
         aql`FOR doc IN ${collection}`,
         queryBuilder.filter
           ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
@@ -420,21 +433,6 @@ export class DbService<T> {
     return this._returnMap(database, query, `No record found for id '${id}'`);
   }
 
-  public AddGraphLogicForPerson() {
-    return aql.join([aql`let children = (FOR v IN 1..1 INBOUND doc relation RETURN v)`,
-                    aql`let parents = (FOR v,e IN 1..1 OUTBOUND doc relation FILTER e.type == "childOf" RETURN v)`,
-                    aql`let spouse = (FOR v,e IN 1..1 OUTBOUND doc relation filter e.type == "spouse" RETURN v)`,
-                    aql`let affiliations = (FOR v,e IN 1..1 OUTBOUND doc affiliation RETURN merge (v, {startDate: e.startDate}))`,
-                    aql`let roles = (FOR v,e IN 1..1 OUTBOUND doc person_role RETURN merge(v,{context:e}))`,
-                    aql`let related = {}`,
-                    aql`let personWithChildren = merge (related, {children: children})`,
-                    aql`let addParents =  merge (personWithChildren, {parents: parents})`,
-                    aql`let addSpouse =  merge (addParents, {spouse: spouse})`,
-                    aql`let addAffiliations =  merge (addSpouse, {affiliations: affiliations})`,
-                    aql`let addRolesToOtherRelatedObjects =  merge (addAffiliations, {roles: roles})`,
-                    aql`RETURN merge(doc,{related:addRolesToOtherRelatedObjects})`
-                    ], " ")
-  }
 
   public async create(
     data: Partial<any> | Array<Partial<any>>,
