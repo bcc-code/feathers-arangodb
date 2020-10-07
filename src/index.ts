@@ -397,9 +397,13 @@ export class DbService<T> {
     return result;
   }
 
-  public async get(id: Id, params: Params) {
+  public async get(id: Id, params: Params, existingQuery?:QueryBuilder) {
     const { database, collection } = await this.connect();
-    const queryBuilder = new QueryBuilder(params);
+    let queryBuilder =new QueryBuilder(params);
+    if (existingQuery) {
+      queryBuilder =  existingQuery
+    }
+
     queryBuilder.addFilter("_key", id, "doc", "AND");
 
     const query: AqlQuery = aql.join(
@@ -409,9 +413,7 @@ export class DbService<T> {
         queryBuilder.filter
           ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
           : aql``,
-        collection.name == 'person'
-        ?this.AddGraphLogicForPerson()
-        :queryBuilder.returnFilter,
+        queryBuilder.returnFilter,
       ],
       " "
     );
