@@ -39,6 +39,7 @@ export class QueryBuilder {
   sort?: AqlQuery;
   filter?: AqlQuery;
   returnFilter?: AqlQuery;
+  withStatement?: AqlQuery;
   _collection: string;
   search?: AqlLiteral;
   varCount: number = 0;
@@ -178,10 +179,10 @@ export class QueryBuilder {
     const fuzzy = (attribute: string, threshold: number, doc: string | null = null) =>
       `ANALYZER(LEVENSHTEIN_MATCH(${doc || docName}.${attribute}, LOWER("${query}"), ${threshold}), "lowercase")
       OR ANALYZER(STARTS_WITH(${doc || docName}.${attribute}, LOWER("${query}")), "lowercase")`
-    // Example: ANALYZER(LEVENSHTEIN_MATCH(doc.name, LOWER("myQuery"), 2), "lowercase") 
+    // Example: ANALYZER(LEVENSHTEIN_MATCH(doc.name, LOWER("myQuery"), 2), "lowercase")
     // OR ANALYZER(STARTS_WITH(doc.name, LOWER("myQuery")), "lowercase")
     const fuzzys = (list: any[], doc: string | null = null) => list.map((el) => fuzzy(el.name, el.threshold, doc)).join(' OR ')
-    const distance = (attribute: string, doc: string | null = null) => 
+    const distance = (attribute: string, doc: string | null = null) =>
       `LEVENSHTEIN_DISTANCE(LOWER(${doc || docName}.${attribute}), LOWER("${query}")) `
     // Example: LEVENSHTEIN_DISTANCE(LOWER(doc.name), LOWER("myQuery"))
     const distances = (list: any[], doc: string | null = null) => list.map((el) => distance(el.name, doc)).join(' + ')
