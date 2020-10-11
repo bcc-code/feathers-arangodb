@@ -6,7 +6,7 @@ import { AutoDatabse } from '../src/auto-database';
 import { expect } from 'chai';
 
 const serviceName = 'people';
-const idProp = 'id';
+const idProp = '_key';
 
 describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id property `, () => {
   const promiseDatabase = 'TEST_PROMISE_DB';

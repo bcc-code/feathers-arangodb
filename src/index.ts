@@ -295,11 +295,10 @@ export class DbService<T> {
     const idObj: any = {};
 
     if (typeof item == "object" && item != null) {
-      if ("_key" in item) {
-        idObj[this._id] = item._key;
-      }
+      idObj[this._id] = item._id;
 
-      const removeKeys = [this._id, "_key"];
+
+      const removeKeys = [];
       if (!this.options.expandData) {
         removeKeys.push("_id", "_rev");
       }
