@@ -20,6 +20,7 @@ import { QueryBuilder } from "./queryBuilder";
 import { GraphVertexCollection } from "arangojs/graph";
 import { ArrayCursor } from "arangojs/cursor";
 import { View } from "arangojs/view";
+import { Migrate, Direction } from "@bcc-its/arango-migrate";
 
 export declare type ArangoDbConfig =
   | string
@@ -198,8 +199,19 @@ export class DbService<T> {
           break;
       }
       await db.autoUseDatabase(this.options.database as string);
+
+      if (process.env.ARANGO_MIGRATIONS_PATH) {
+        console.log("Starting migrations");
+        const migrationPath = process.env.PWD! + process.env.ARANGO_MIGRATIONS_PATH!;
+
+      // If migrations fail, we will throw here
+      await Migrate(Direction.Up, db, migrationPath);
+
+      }
+
       this._database = db;
     }
+
 
     if (!this._graph && this._graphPromise) {
       this._graph = await this._graphPromise;
@@ -214,7 +226,7 @@ export class DbService<T> {
       }
     }
 
-    /* istanbul ignore next  This doens't need to be tested  */
+    /* istanbul ignore next  This doesn't need to be tested  */
     if (this._collectionPromise) {
       this._collection = await this._collectionPromise;
     }

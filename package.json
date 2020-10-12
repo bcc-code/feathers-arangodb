@@ -35,6 +35,7 @@
     "node": ">= 8"
   },
   "dependencies": {
+    "@bcc-its/arango-migrate": "^0.9.6",
     "@feathersjs/commons": "^4.5.3",
     "@feathersjs/errors": "^4.5.3",
     "arangojs": "^7.0.1",
