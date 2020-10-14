@@ -14,7 +14,7 @@ export class AutoDatabse extends Database {
   }
 
   /**
-   * Will asthmatically create a database of the name if it doesn't exist.
+   * Will automatically create a database of the name if it doesn't exist.
    * @param databaseName
    */
   async autoUseDatabase(databaseName: string): Promise<this> {
@@ -109,7 +109,7 @@ export class AutoDatabse extends Database {
   }
 
   async autoView(view: string): Promise<View | undefined> {
-    if (view == null) 
+    if (view == null)
       return undefined;
     const viewsList = await this.listViews();
     /* istanbul ignore next  */
