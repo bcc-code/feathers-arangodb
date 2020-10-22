@@ -379,7 +379,7 @@ export class DbService<T> {
       ],
       " "
     );
-
+    console.log(query.bindVars)
     const result = (await this._returnMap(
       database,
       query,
@@ -389,6 +389,7 @@ export class DbService<T> {
     )) as any;
 
     console.log("DEBUG - aql:", query.query);
+    console.log("DEBUG - variables:",query.bindVars)
 
     if (!_isEmpty(this._paginate)) {
 

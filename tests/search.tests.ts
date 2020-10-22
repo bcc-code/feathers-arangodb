@@ -21,7 +21,7 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
         database: "TEST",
         authType: AUTH_TYPES.BASIC_AUTH,
         username: "root",
-        password: "",
+        password: "root",
         dbConfig: {
           url: "http://localhost:8529",
         }
@@ -31,7 +31,7 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
     testUser = await service.get('178494230', {});
     specialCharactersUser = await service.get('430126186', {});
   });
-  
+
   it("Search - PersonID", async () => {
     const results = await service.find({ query: { $search: testUser.personID } });
     expect(results[0].personID).to.eq(testUser.personID);
@@ -51,7 +51,7 @@ describe(`Feathers search tests on the ${serviceName} service `, () => {
     const results = await service.find({ query: { $search: testUser.displayName.toUpperCase() } });
     expect(results[0].personID).to.eq(testUser.personID);
   });
-  
+
   it("Search - Case insensitive lowercase", async () => {
     const results = await service.find({ query: { $search: testUser.displayName.toLowerCase() } });
     expect(results[0].personID).to.eq(testUser.personID);

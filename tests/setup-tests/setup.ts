@@ -12,7 +12,7 @@ const importDB = async (): Promise<void> => {
 
   const arangoDBConfig = {
     username:"root",
-    password:"",
+    password:"root",
     url:"tcp://127.0.0.1:8529/",
     database:"TEST"
   }
