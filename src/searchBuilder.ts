@@ -24,7 +24,7 @@
       case 'person_role':
         searchQuery = aql.literal(
           `${docName}._from IN ( FOR r IN person_view SEARCH
-          ${personSearch(docName,query,tokensVariableName)} RETURN r._id )`);
+          ${personSearch("r",query,tokensVariableName)} RETURN r._id )`);
         break;
       case 'country':
       searchQuery = aql.literal(`${generateFuzzyStatement([{name:'nameEn',threshold:2},{name:'nameNo',threshold:2}],query,docName,tokensVariableName)}
@@ -45,30 +45,41 @@
 
   const personSearch = (doc: string,query:string,tokensVariableName:string) => {
     const fuzzySearchFields: any[] = [
-      { name: 'firstName', threshold: 2 },
-      { name: 'lastName', threshold: 2 },
-      { name: 'displayName', threshold: 3 },
-      { name: 'email', threshold: 2 }
+      { name: 'displayName', threshold: 3,analyzer:'person',generateAnExpressionPerWord:true },
+      { name: 'email', threshold: 1, analyzer:'identity',generateAnExpressionPerWord:false },
+      { name: 'personID', threshold: 1,analyzer:'identity',generateAnExpressionPerWord:false }
     ];
     return generateFuzzyStatement(fuzzySearchFields,query, doc,tokensVariableName)
 
   }
 
   function generateFuzzyStatement(fields:any, query:string,doc:string,tokensVariableName:string){
+    const queryType = typeof(query)
+    let queryInStringOrNumber = queryType == 'string' ? `"${query}"` : query
 
     let fuzzyStatements = []
 
     for (const field of fields) {
-        const numberOfWords = query.split(" ").length;
-		for (let index = 0; index < numberOfWords; index++) {
-            fuzzyStatements.push(`ANALYZER(LEVENSHTEIN_MATCH(${doc}.${field.name}, ${tokensVariableName}[${index}], ${field.threshold}), "person")`)
-            fuzzyStatements.push(`ANALYZER(STARTS_WITH(${doc}.${field.name}, ${tokensVariableName}[${index}]), "person")`)
-		}
+        if(field.generateAnExpressionPerWord && queryType == 'string'){
+          const numberOfWords = queryInStringOrNumber.split(" ").length;
+          // Generate a expressions for each word for this spesific field
+          for (let index = 0; index < numberOfWords; index++) {
+            fuzzyStatements.push(`ANALYZER(LEVENSHTEIN_MATCH(${doc}.${field.name}, ${tokensVariableName}[${index}], ${field.threshold}), "${field.analyzer}")`)
+            fuzzyStatements.push(`ANALYZER(STARTS_WITH(${doc}.${field.name}, ${tokensVariableName}[${index}]), "${field.analyzer}")`)
+          }
+        }else if(queryType == 'string') {
+            fuzzyStatements.push(`ANALYZER(LEVENSHTEIN_MATCH(${doc}.${field.name}, ${queryInStringOrNumber}, ${field.threshold}), "${field.analyzer}")`)
+            fuzzyStatements.push(`ANALYZER(STARTS_WITH(${doc}.${field.name}, ${queryInStringOrNumber}), "${field.analyzer}")`)
+        }else{
+            fuzzyStatements.push(`${doc}.${field.name} == ${queryInStringOrNumber}`)
+        }
+
+
       }
 
       let result = fuzzyStatements.join(' OR ')
-      result += 'SORT BM25(doc) desc'
-      result += 'limit 40'
+      result += ` SORT BM25(${doc}) desc `
+      result += ' LIMIT 40 '
     return result
   }
 
