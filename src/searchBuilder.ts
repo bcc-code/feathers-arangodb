@@ -45,7 +45,7 @@
 
   const personSearch = (doc: string,query:string,tokensVariableName:string) => {
     const fuzzySearchFields: any[] = [
-      { name: 'displayName', threshold: 3,analyzer:'person',generateAnExpressionPerWord:true },
+      { name: 'displayName', threshold: 3,analyzer:'bcc_text',generateAnExpressionPerWord:true },
       { name: 'email', threshold: 1, analyzer:'identity',generateAnExpressionPerWord:false },
       { name: 'personID', threshold: 1,analyzer:'identity',generateAnExpressionPerWord:false }
     ];
