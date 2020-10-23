@@ -26,11 +26,16 @@
           ${personSearch("r",query,tokensVariableName)} RETURN r._id )`);
         break;
       case 'country':
-      searchQuery = aql.literal(`${generateFuzzyStatement([{name:'nameEn',threshold:2},{name:'nameNo',threshold:2}],query,docName,tokensVariableName)}
+      searchQuery = aql.literal(`${generateFuzzyStatement(
+            [{name:'nameEn',threshold:2, analyzer:'bcc_text',generateAnExpressionPerWord:true},
+            {name:'nameNo',threshold:2, analyzer:'bcc_text',generateAnExpressionPerWord:true}],
+            query,
+            docName,
+            tokensVariableName)}
         `);
         break;
       case 'org':
-        searchQuery = aql.literal(`${generateFuzzyStatement([{name:'name',threshold:2}],query,docName,tokensVariableName)}
+        searchQuery = aql.literal(`${generateFuzzyStatement([{name:'name',threshold:2, analyzer:'bcc_text',generateAnExpressionPerWord:false}],query,docName,tokensVariableName)}
         OR ${docName}.churchID == ${queryNumber}
         `);
         break;
