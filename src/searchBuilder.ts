@@ -15,7 +15,6 @@
 
     const queryNumber = parseInt(query) || 0
 
-    console.log("the new function works")
     let searchQuery:AqlLiteral = aql.literal(`No query defined`)
     switch(collection) {
       case 'person':
