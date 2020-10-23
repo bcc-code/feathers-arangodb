@@ -9,7 +9,7 @@ describe('AutoDatabase Class', () => {
   const testDatabase = 'TEST_AUTO_DB';
   const testCollection = 'TEST_AUTO_COL';
   const testUser = 'root';
-  const testPass = '';
+  const testPass = 'root';
 
   before(async () => {
     db.useBasicAuth(testUser, testPass);

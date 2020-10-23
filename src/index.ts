@@ -364,6 +364,9 @@ export class DbService<T> {
         queryBuilder.withStatement
         ? queryBuilder.withStatement
         : aql``,
+        queryBuilder.tokensStatement
+        ? queryBuilder.tokensStatement
+        : aql``,
         aql`FOR doc in ${queryBuilder.search ? view : collection}`,
         queryBuilder.search
           ? aql.join([aql`SEARCH`, queryBuilder.search], " ")
@@ -379,7 +382,9 @@ export class DbService<T> {
       ],
       " "
     );
-
+    
+    console.log("DEBUG - aql:", query.query);
+    console.log("DEBUG - variables:",query.bindVars)
     const result = (await this._returnMap(
       database,
       query,
@@ -388,7 +393,7 @@ export class DbService<T> {
       !_isEmpty(this._paginate)
     )) as any;
 
-    console.log("DEBUG - aql:", query.query);
+
 
     if (!_isEmpty(this._paginate)) {
 

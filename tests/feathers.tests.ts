@@ -13,7 +13,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
   const testDatabase = 'TEST_DB';
   const testCollection = 'TEST_COL';
   const testUser = 'root';
-  const testPass = '';
+  const testPass = 'root';
   let app: Application | any;
   let service: IArangoDbService<any>;
   let _ids: any = {};
