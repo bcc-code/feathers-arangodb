@@ -1,3 +1,4 @@
+import 'mocha'
 import feathers from "@feathersjs/feathers";
 import { Application } from "@feathersjs/feathers";
 import { expect } from "chai";
