@@ -143,7 +143,7 @@ export class QueryBuilder {
           break;
         case "$search":
           const tokensVariableName = 'tokens'
-          this.tokensStatement = aql`let tokens = TOKENS(${value},'person')`
+          this.tokensStatement = aql`let tokens = TOKENS(${value},'bcc_text')`
           console.log('Feathers Search Query: ',value)
           this.search = addSearch(value, docName,this._collection,tokensVariableName);
           break;
