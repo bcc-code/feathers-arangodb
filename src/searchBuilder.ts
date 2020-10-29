@@ -35,7 +35,7 @@
         `);
         break;
       case 'org':
-        searchQuery = aql.literal(`${generateFuzzyStatement([{name:'name',threshold:2, analyzer:'bcc_text',generateAnExpressionPerWord:false}],query,docName,tokensVariableName)}
+        searchQuery = aql.literal(`${generateFuzzyStatement([{name:'name',threshold:2, analyzer:'bcc_text',generateAnExpressionPerWord:true}],query,docName,tokensVariableName)}
         OR ${docName}.churchID == ${queryNumber}
         `);
         break;
