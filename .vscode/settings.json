@@ -5,7 +5,7 @@
     "mochaExplorer.require": "ts-node/register",
     "mochaExplorer.mochaPath": "./node_modules/mocha",
     "mochaExplorer.cwd": "./",
-    "mochaExplorer.debuggerConfig": "Arango Adaptor - Debug server",
+    "mochaExplorer.debuggerConfig": "",
     "mochaExplorer.env": {
         "NODE_ENV": "test"
     },

@@ -142,10 +142,8 @@ export class QueryBuilder {
           this.addSort(value, docName);
           break;
         case "$search":
-          const tokensVariableName = 'tokens'
-          this.tokensStatement = aql`let tokens = TOKENS(${value},'bcc_text')`
           console.log('Feathers Search Query: ',value)
-          this.search = addSearch(value, docName,this._collection,tokensVariableName);
+          this.search = addSearch(value, docName,this._collection);
           break;
         default:
           this.addFilter(key, value, docName, operator);
