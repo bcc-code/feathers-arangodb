@@ -57,7 +57,9 @@
 
   }
 
-  function generateFuzzyStatement(fields:any, query:string,doc:string,tokensVariableName:string){
+  function generateFuzzyStatement(fields:any, query:any,doc:string,tokensVariableName:string){
+    if(!isNaN(parseInt(query))) query = parseInt(query)
+
     const queryType = typeof(query)
     let queryInStringOrNumber = queryType == 'string' ? `"${query}"` : query
 
@@ -83,7 +85,6 @@
 
       let result = fuzzyStatements.join(' OR ')
       result += ` SORT BM25(${doc}) desc `
-      result += ' LIMIT 40 '
     return result
   }
 
