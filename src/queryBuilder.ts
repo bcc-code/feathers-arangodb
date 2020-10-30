@@ -107,6 +107,7 @@ export class QueryBuilder {
   ): QueryBuilder {
     this.selectBuilder(params, returnDocName);
     const query = _get(params, "query", null);
+    console.log(`Query from client: ${JSON.stringify(query)}, docName:${docName}, returnDocName:${returnDocName}`)
     this._runCheck(query, docName, returnDocName);
     return this;
   }
@@ -118,7 +119,8 @@ export class QueryBuilder {
     operator = "AND"
   ) {
     if (!query || _isEmpty(query)) return this;
-    Object.keys(query).forEach((key: string) => {
+    const queryParamaters = Object.keys(query)
+    queryParamaters.forEach((key: string) => {
       const testKey = key.toLowerCase();
       const value = query[key];
       switch (testKey) {
@@ -142,7 +144,6 @@ export class QueryBuilder {
           this.addSort(value, docName);
           break;
         case "$search":
-          console.log('Feathers Search Query: ',value)
           this.search = addSearch(value, docName,this._collection);
           break;
         default:
@@ -171,34 +172,31 @@ export class QueryBuilder {
   }
 
 
-  addFilter(
-    key: string,
-    value: any,
-    docName: string = "doc",
-    operator = "AND"
-  ): QueryBuilder {
-    const stack = (
-      fOpt: string,
-      arg1: AqlValue,
-      arg2: AqlValue,
-      equality: AqlValue
-    ) => {
+  addFilter(key: string, value: any, docName: string = "doc", operator = "" ): QueryBuilder {
+
+    const stack = (fOpt: string, arg1: AqlValue, arg2: AqlValue, equality: AqlValue ) => {
       this.filter = aql.join([this.filter, arg1, equality, arg2], " ");
       delete value[fOpt];
       return this.addFilter(key, value, docName, operator);
     };
 
-    if (typeof value === "object" && _isEmpty(value)) return this;
+    const valueIsAPrimitiveType = _isString(value) || _isBoolean(value) || _isNumber(value)
+    const stringValueOfvalue:any = Object.keys(value)[0]
+    const valueIsAReservedWord = this.reserved.includes(stringValueOfvalue)
+
+    if ((typeof value === "object" && _isEmpty(value)) ) return this;
 
     if (this.filter == null) {
       this.filter = aql``;
     } else {
-      if (this.filter.query != "") {
+      if (this.filter.query != "" && (valueIsAPrimitiveType || valueIsAReservedWord)) {
         this.filter = aql.join([this.filter, aql.literal(`${operator}`)], " ");
         operator = "AND";
       }
     }
-    if (_isString(value) || _isBoolean(value) || _isNumber(value)) {
+
+    // Build the filters
+    if (valueIsAPrimitiveType) {
       this.filter = aql.join(
         [this.filter, aql.literal(`${docName}.${key} ==`), aql`${value}`],
         " "
