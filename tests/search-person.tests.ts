@@ -1,3 +1,4 @@
+import 'mocha'
 import feathers from "@feathersjs/feathers";
 import { Application } from "@feathersjs/feathers";
 import { expect } from "chai";
@@ -8,7 +9,7 @@ const serviceName = "person";
 let testUser: any = null;
 let specialCharactersUser: any = null;
 let userWithMiddleName: any = null;
-describe(`Search tests on the ${serviceName} service `, () => {
+describe(`Search & Query tests on the ${serviceName} service `, () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 
@@ -35,7 +36,7 @@ describe(`Search tests on the ${serviceName} service `, () => {
   });
 
   it("Search - PersonID", async () => {
-    const results = await service.find({ query: { $search: testUser.personID } });
+    const results = await service.find({ query: { $search: `${testUser.personID}` } });
     expect(results[0].personID).to.eq(testUser.personID);
   });
 
@@ -78,5 +79,26 @@ describe(`Search tests on the ${serviceName} service `, () => {
   it("Search - With middle name given only first 4 letter of first and lastname", async () => {
     const results = await service.find({ query: { $search: 'bat dal' } });
     expect(results.some((el: any) => el.personID == userWithMiddleName.personID)).to.be.true
+  });
+
+  it("Search - country and church filter simultaneously", async () => {
+    const results = await service.find({ query: {
+                                                  churchID: {
+                                                    $in: [
+                                                      69
+                                                    ]
+                                                  },
+                                                  currentAddress: {
+                                                    country: {
+                                                      _id: {
+                                                        $in: [
+                                                          'country/178963757'
+                                                        ]
+                                                      }
+                                                    }
+                                                  }
+                                                }
+                                              });
+    expect(results.length > 0).to.be.true
   });
 });
