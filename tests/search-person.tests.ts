@@ -82,8 +82,8 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
   });
 
   it("Search - exact match (contains)", async () => {
-    const results = await service.find({ query: { $search: '"bat"' } });
-    expect(results.some((el: any) => el.personID == userWithMiddleName.personID)).to.be.true
+    const results = await service.find({ query: { $search: '"Thomas Sebat"' } });
+    expect(results[0].personID == 19149).to.be.true
   });
 
   it("Search - country and church filter simultaneously", async () => {

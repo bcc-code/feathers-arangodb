@@ -369,7 +369,7 @@ export class DbService<T> {
         : aql``,
         aql`FOR doc in ${queryBuilder.search ? view : collection}`,
         queryBuilder.search
-          ? aql.join([aql`SEARCH`, queryBuilder.search], " ")
+          ? aql.join([aql``, queryBuilder.search], " ")
           : aql``,
         queryBuilder.filter
           ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
@@ -382,7 +382,7 @@ export class DbService<T> {
       ],
       " "
     );
-    
+
     console.log("DEBUG - aql:", query.query);
     console.log("DEBUG - variables:",query.bindVars)
     const result = (await this._returnMap(
