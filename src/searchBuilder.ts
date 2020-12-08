@@ -1,14 +1,8 @@
   import _isNumber from "lodash/isNumber";
-  import _isBoolean from "lodash/isBoolean";
-  import _isObject from "lodash/isObject";
-  import _isString from "lodash/isString";
-  import _omit from "lodash/omit";
-  import _get from "lodash/get";
-  import _set from "lodash/set";
-  import _isEmpty from "lodash/isEmpty";
-  import { Params } from "@feathersjs/feathers";
+  import _filter from "lodash/filter";
+  import _find from "lodash/find";
+
   import { aql } from "arangojs";
-  import { AqlQuery, AqlValue } from "arangojs/aql";
   import { AqlLiteral } from "arangojs/aql";
 
   function addSearch(query: any, docName: string = "doc",collection:string = "person"):AqlLiteral {
@@ -19,11 +13,6 @@
     switch(collection) {
       case 'person':
         searchQuery = aql.literal(personSearch(docName,query))
-        break;
-      case 'person_role':
-        searchQuery = aql.literal(
-          `${docName}._from IN ( FOR r IN person_view SEARCH
-          ${personSearch("r",query)} RETURN r._id )`);
         break;
       case 'country':
       searchQuery = aql.literal(`${generateFuzzyStatement(
@@ -55,30 +44,60 @@
     return generateFuzzyStatement(fuzzySearchFields,query, doc)
 
   }
-
+  type searchQueryType = "number" | "exact" | 'fuzzy'
+  type searchOrFilter = 'SEARCH' |'FILTER'
+  type modifiedQueryType = {type:searchQueryType,query:any,searchOrFilter:searchOrFilter}
   function generateFuzzyStatement(fields:any, query:any,doc:string){
-    if(!isNaN(parseInt(query))) query = parseInt(query)
+    const modifiedQuery:modifiedQueryType = determineQueryType(query)
+    let numberField:any;
+    let stringFields:any;
 
-    const queryType = typeof(query)
-    let queryInStringOrNumber = queryType == 'string' ? `"${query}"` : query
+    let searchStatements = []
+    switch (modifiedQuery.type) {
+      case "number":
+        numberField = _find(fields,['type','number'])
+        searchStatements.push(`${doc}.${numberField.name} == ${modifiedQuery.query}`)
+        break;
+      case "fuzzy":
+        stringFields = _filter(fields,['type','string'])
+        for (const field of stringFields) {
+          searchStatements.push(`ANALYZER(${doc}.${field.name} IN TOKENS('${modifiedQuery.query}','${field.analyzer}'),'${field.analyzer}')`)
+        }
+        break;
+      case "exact":
+        stringFields = _filter(fields,['type','string'])
+        for (const field of stringFields) {
+          searchStatements.push(`CONTAINS(LOWER(${doc}.${field.name}),LOWER('${modifiedQuery.query}'))`)
+        }
+        break;
+      default:
+        throw console.error(`Unable to determine the type of search query, between number,exact or fuzzy, query: ${query}`);
+        break;
+    }
 
-    let fuzzyStatements = []
-
-    for (const field of fields) {
-      if(queryType == 'string' && field.type == 'string'){
-
-        fuzzyStatements.push(`ANALYZER(${doc}.${field.name} IN TOKENS(${queryInStringOrNumber},'${field.analyzer}'),'${field.analyzer}')`)
-
-      }else if(queryType == 'number' && field.type == 'number'){
-
-          fuzzyStatements.push(`${doc}.${field.name} == ${queryInStringOrNumber}`)
-
-       }
-      }
-
-      let result = fuzzyStatements.join(' OR ')
-      result += ` SORT BM25(${doc}) desc `
+    let result = `${modifiedQuery.searchOrFilter} `
+    result += searchStatements.join(' OR ')
+    result += ` SORT BM25(${doc}) desc `
     return result
+  }
+
+  function determineQueryType(query:string):modifiedQueryType {
+
+    if(!isNaN(parseInt(query))) return {type:"number",query:parseInt(query),searchOrFilter:"SEARCH"}
+
+    if((query.startsWith("\"")
+      ||query.startsWith("'"))
+      &&
+      (query.endsWith("\"")
+      ||query.endsWith("'"))){
+        query = query.replace("\"","")
+        query = query.replace("\"","")
+        query = query.replace("'","")
+        query = query.replace("'","")
+        return {type:"exact",query:query,searchOrFilter:"FILTER"}
+    }
+
+    return {type:"fuzzy",query:query,searchOrFilter:"SEARCH"}
   }
 
   export {

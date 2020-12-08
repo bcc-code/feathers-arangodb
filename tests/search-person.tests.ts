@@ -9,7 +9,7 @@ const serviceName = "person";
 let testUser: any = null;
 let specialCharactersUser: any = null;
 let userWithMiddleName: any = null;
-describe(`Search & Query tests on the ${serviceName} service `, () => {
+describe(`Search & Query tests on the ${serviceName} service `,async () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 
@@ -79,6 +79,11 @@ describe(`Search & Query tests on the ${serviceName} service `, () => {
   it("Search - With middle name given only first 4 letter of first and lastname", async () => {
     const results = await service.find({ query: { $search: 'bat dal' } });
     expect(results.some((el: any) => el.personID == userWithMiddleName.personID)).to.be.true
+  });
+
+  it("Search - exact match (contains)", async () => {
+    const results = await service.find({ query: { $search: '"Thomas Sebat"' } });
+    expect(results[0].displayName == "Thomas Sebat").to.be.true
   });
 
   it("Search - country and church filter simultaneously", async () => {
