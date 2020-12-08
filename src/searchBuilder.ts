@@ -55,7 +55,6 @@
     let searchStatements = []
     switch (modifiedQuery.type) {
       case "number":
-
         numberField = _find(fields,['type','number'])
         searchStatements.push(`${doc}.${numberField.name} == ${modifiedQuery.query}`)
         break;
@@ -76,27 +75,9 @@
         break;
     }
 
-    if(!isNaN(parseInt(query))) query = parseInt(query)
-
-    const queryType = typeof(query)
-    let queryInStringOrNumber = queryType == 'string' ? `"${query}"` : query
-
-
-
-    // for (const field of fields) {
-    //   if(queryType == 'string' && field.type == 'string'){
-
-    //     searchStatements.push(`ANALYZER(${doc}.${field.name} IN TOKENS(${queryInStringOrNumber},'${field.analyzer}'),'${field.analyzer}')`)
-
-    //   }else if(queryType == 'number' && field.type == 'number'){
-
-    //     searchStatements.push(`${doc}.${field.name} == ${queryInStringOrNumber}`)
-
-    //    }
-    //   }
-      let result = `${modifiedQuery.searchOrFilter} `
-      result += searchStatements.join(' OR ')
-      result += ` SORT BM25(${doc}) desc `
+    let result = `${modifiedQuery.searchOrFilter} `
+    result += searchStatements.join(' OR ')
+    result += ` SORT BM25(${doc}) desc `
     return result
   }
 
