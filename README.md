@@ -2,10 +2,10 @@
 A [Feathers](https://feathersjs.com) database adapter for [ArangoDB](https://www.arango.org/) using [official NodeJS driver for ArangoDB](https://github.com/arangodb/arangojs).
 
 ```bash
-$ npm install --save arangojs @bcc-its/feathers-arangodb
+$ npm install --save arangojs @bcc-code/feathers-arangodb
 ```
 
-> **Important:** `@bcc-its/feathers-arangodb` implements the [Feathers Common database adapter API](https://docs.feathersjs.com/api/databases/common.html) and [querying syntax](https://docs.feathersjs.com/api/databases/querying.html).
+> **Important:** `@bcc-code/feathers-arangodb` implements the [Feathers Common database adapter API](https://docs.feathersjs.com/api/databases/common.html) and [querying syntax](https://docs.feathersjs.com/api/databases/querying.html).
 
 > This adapter also requires a [running ArangoDB](https://docs.arangodb.com/3.3/Manual/GettingStarted/) database server.
 
