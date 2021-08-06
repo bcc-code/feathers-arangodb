@@ -20,7 +20,7 @@ const importDB = async (): Promise<void> => {
   // Decide whether to execute the windows script or the linux script
   let scriptExtension = (process.platform == 'win32') ? 'bat' : 'sh';
   let bat =  require.resolve(`./util_scripts/reset_test_db.${scriptExtension}`);
-  bat = `${bat} ${arangoDBConfig.url} ${arangoDBConfig.username} ${arangoDBConfig.database}`
+  bat = `${bat} ${arangoDBConfig.url} ${arangoDBConfig.username} ${arangoDBConfig.password} ${arangoDBConfig.database}`
   // Execute the bat script
   await execPromise(bat)
   .catch((cause) => {
