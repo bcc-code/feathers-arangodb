@@ -104,6 +104,7 @@ export class QueryBuilder {
   sanitizeFieldName(fieldName: string): string {
     let tempValue = fieldName.split(' ')[0]
     tempValue = tempValue.replace(/\/\//g, '');
+    tempValue = tempValue.replace(/:/g, '');
     return tempValue;
   }
 
