@@ -1,6 +1,6 @@
 import feathers from "@feathersjs/feathers";
 import { Application } from "@feathersjs/feathers";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
 
@@ -35,11 +35,12 @@ describe(`Aql injection prevention tests `, () => {
     const standardQueryResults = await service.find({ query: { $select: ['_id', 'profileVisibility'] } });
     let maliciousQueryResults = {};
     try {
-        maliciousQueryResults = await service.find({ query: { $select: ["_id", "profileVisibility\": 0, \"church\":doc }//"]},});
+        maliciousQueryResults = await service.find({ query: { $select: ["_id", "profileVisibility\":0,\"church\":doc}//"]},});
     } catch (error) {
-        console.log(error)
+        expect(error.name === "ArangoError")
+        expect(error.code === 400)
     }
-    expect(maliciousQueryResults[0]._id).to.eq(standardQueryResults[0]._id);
+    assert.fail("Malicious qquery should result in ArangoError")
   });
 
   it.skip("Modified query gets all data from the system", async () => {
