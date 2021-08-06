@@ -33,8 +33,13 @@ describe(`Aql injection prevention tests `, () => {
 
   it.only("AQL injection on select is detected and not let through", async () => {
     const standardQueryResults = await service.find({ query: { $select: ['_id', 'profileVisibility'] } });
-    const results = await service.find({ query: { $select: ["profileVisibility\": 0, \"church\":doc }//"]},});
-    expect(results[0]._id).to.eq(standardQueryResults[0]._id);
+    let maliciousQueryResults = {};
+    try {
+        maliciousQueryResults = await service.find({ query: { $select: ["_id", "profileVisibility\": 0, \"church\":doc }//"]},});
+    } catch (error) {
+        console.log(error)
+    }
+    expect(maliciousQueryResults[0]._id).to.eq(standardQueryResults[0]._id);
   });
 
   it.skip("Modified query gets all data from the system", async () => {
