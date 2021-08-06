@@ -171,7 +171,7 @@ export class QueryBuilder {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.literal(
-            `${docName}.${key} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
+            `${docName}.${this.sanitizeFieldName(key)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
           );
         }),
         ", "
