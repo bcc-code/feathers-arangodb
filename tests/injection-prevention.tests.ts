@@ -43,10 +43,9 @@ describe(`Aql injection prevention tests `, () => {
     assert.fail("Malicious query should result in ArangoError")
   });
 
-  it.only("Modified query gets all data from the system", async () => {
+  it("AQL injection on sort is detected and not let through", async () => {
     const results = await service.find( { query: {$sort:{'profileVisibility RETURN { \"church\": doc, \"profileVisibility\": 0 }//':1}}} );
-    console.log(results)
-    expect(results[0]._id).to.eq("person/430126187");
+    expect(results[0]).to.not.have.property('profileVisibility')
   });
 
   it.skip("Modified query gets all data from the system v2", async () => {
