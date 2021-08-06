@@ -84,6 +84,7 @@ export class QueryBuilder {
       var ret = {};
       _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
+        fieldName = this.sanitizeFieldName(fieldName)
         _set(ret, fieldName, docName + "." + fieldName);
       });
       filter = aql.join(
@@ -98,6 +99,12 @@ export class QueryBuilder {
     }
     this.returnFilter = filter;
     return filter;
+  }
+
+  sanitizeFieldName(fieldName: string): string {
+    let tempValue = fieldName.split(' ')[0]
+    tempValue = tempValue.replace(/\/\//g, '');
+    return tempValue;
   }
 
   create(

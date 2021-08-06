@@ -31,16 +31,16 @@ describe(`Aql injection prevention tests `, () => {
  
   });
 
-  it.only("AQL injection on select is detected and not let through", async () => {
-    const standardQueryResults = await service.find({ query: { $select: ['_id', 'profileVisibility'] } });
+  it("AQL injection on select is detected and not let through", async () => {
     let maliciousQueryResults = {};
     try {
         maliciousQueryResults = await service.find({ query: { $select: ["_id", "profileVisibility\":0,\"church\":doc}//"]},});
     } catch (error) {
         expect(error.name === "ArangoError")
         expect(error.code === 400)
+        return;
     }
-    assert.fail("Malicious qquery should result in ArangoError")
+    assert.fail("Malicious query should result in ArangoError")
   });
 
   it.skip("Modified query gets all data from the system", async () => {
