@@ -16,13 +16,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 URL="$1"
 USERNAME="$2"
-PASSWORD="$3"
-DATABASE="$4"
+DATABASE="$3"
 
 arangorestore \
   --server.database "$DATABASE" \
   --server.username "$USERNAME" \
-  --server.password "$PASSWORD" \
   --server.authentication true \
   --server.endpoint "$URL" \
   --input-directory "$DIR/../test_data" \
