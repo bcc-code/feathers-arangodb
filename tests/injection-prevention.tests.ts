@@ -34,7 +34,7 @@ describe(`Aql injection prevention tests `, () => {
   it("AQL injection on select is detected and not let through", async () => {
     let maliciousQueryResults = {};
     try {
-        maliciousQueryResults = await service.find({ query: { $select: ["_id", "profileVisibility\":0,\"church\":doc}//"]},});
+        maliciousQueryResults = await service.find({ query: { $select: ["_id", 'profileVisibility\":0,\"church\":doc}//']},});
     } catch (error) {
         expect(error.name === "ArangoError")
         expect(error.code === 400)
@@ -43,8 +43,8 @@ describe(`Aql injection prevention tests `, () => {
     assert.fail("Malicious query should result in ArangoError")
   });
 
-  it.skip("Modified query gets all data from the system", async () => {
-    const results = await service.find( {"$sort":{"profileVisibility : 1 RETURN { \"church\": doc, \"profileVisibility\": 0 //}":1}} );
+  it.only("Modified query gets all data from the system", async () => {
+    const results = await service.find( { query: {$sort:{'profileVisibility RETURN { \"church\": doc, \"profileVisibility\": 0 }//':1}}} );
     console.log(results)
     expect(results[0]._id).to.eq("person/430126187");
   });
