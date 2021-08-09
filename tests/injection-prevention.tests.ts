@@ -31,7 +31,7 @@ describe(`Aql injection prevention tests `, () => {
  
   });
 
-  it("AQL injection on select is detected and not let through", async () => {
+  it("AQL injection on find with select is detected and not let through", async () => {
     let maliciousQueryResults = {};
     try {
         maliciousQueryResults = await service.find({ query: { $select: ["_id", 'profileVisibility\":0,\"church\":doc}//']},});
@@ -43,9 +43,15 @@ describe(`Aql injection prevention tests `, () => {
     assert.fail("Malicious query should result in ArangoError")
   });
 
-  it("AQL injection on sort is detected and not let through", async () => {
+  it("AQL injection on find with sort is detected and not let through", async () => {
     const results = await service.find( { query: {$sort:{'profileVisibility RETURN { \"church\": doc, \"profileVisibility\": 0 }//':1}}} );
     expect(results[0]).to.not.have.property('profileVisibility')
+  });
+
+  it("AQL injection on find with filter is detected and not let through", async () => {
+    const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328(current user key)\' }//":"!"}} );
+    expect(results).to.be.an('array')
+    expect(results.length).to.be.equal(0)
   });
 
   it("AQL injection on get with filter is detected and not let through", async () => {
