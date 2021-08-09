@@ -4,12 +4,13 @@ import { assert, expect } from "chai";
 import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
 
-const serviceName = "org";
+const serviceName = "person";
 let testUserWithARole: any = null;
 
 describe(`Aql injection prevention tests `, () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
+  let authService: IArangoDbService<any>;
 
   before(async () => {
     await importDB()
@@ -28,6 +29,7 @@ describe(`Aql injection prevention tests `, () => {
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
+    authService = <IArangoDbService<any>>app.service("authentication");
  
   });
 
@@ -71,6 +73,11 @@ describe(`Aql injection prevention tests `, () => {
 
     const foundEntities = await service.find();
     expect(foundEntities.length).to.be.greaterThan(0);
+  });
+
+  it.only("AQL injection on get with filter is detected and not let through, example 3", async () => {
+    const results = await service.get("178495328", {query: {"@value2 RETURN doc//":{"$nin":[""]}}} );
+    expect(results).to.not.be.an('array')
   });
 
 });
