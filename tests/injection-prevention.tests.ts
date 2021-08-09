@@ -49,7 +49,7 @@ describe(`Aql injection prevention tests `, () => {
   });
 
   it.only("AQL injection on get is detected and not let through", async () => {
-    const results = await service.get("430126187", {query: {"profileVisibility != @value1 RETURN { data: doc, _key: @value2 }//":7}} );
+    const results = await service.get("178495328", {query: {"profileVisibility != @value1 RETURN { data: doc, _key: @value2 }//":1}} );
     expect(results).to.not.be.an('array')
   });
 
