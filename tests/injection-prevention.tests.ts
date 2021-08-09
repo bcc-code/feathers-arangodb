@@ -48,10 +48,9 @@ describe(`Aql injection prevention tests `, () => {
     expect(results[0]).to.not.have.property('profileVisibility')
   });
 
-  it.skip("Modified query gets all data from the system v2", async () => {
-    const results = await service.get("430126187", {"profileVisibility != @value1 RETURN { data: doc, _key: @value2 }//":7} );
-    console.log(results)
-    expect(results._id).to.eq("person/430126187");
+  it.only("AQL injection on get is detected and not let through", async () => {
+    const results = await service.get("430126187", {query: {"profileVisibility != @value1 RETURN { data: doc, _key: @value2 }//":7}} );
+    expect(results).to.not.be.an('array')
   });
 
 });
