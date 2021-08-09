@@ -155,7 +155,7 @@ export class QueryBuilder {
           this.search = addSearch(value, docName,this._collection);
           break;
         default:
-          this.addFilter(key, value, docName, operator);
+          this.addFilter(this.sanitizeFieldName(key), value, docName, operator);
       }
     });
   }
