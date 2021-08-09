@@ -12,7 +12,7 @@ describe(`Aql injection prevention tests `, () => {
   let service: IArangoDbService<any>;
 
   before(async () => {
-    //await importDB()
+    await importDB()
     app = feathers();
     app.use(
       `/${serviceName}`,
@@ -62,6 +62,15 @@ describe(`Aql injection prevention tests `, () => {
   it("AQL injection on get with filter is detected and not let through, example 2", async () => {
     const results = await service.get("178495328", {query: {"@value2 RETURN doc//":{"$nin":[""]}}} );
     expect(results).to.not.be.an('array')
+  });
+
+  it("AQL injection of REMOVE is detected and not let through", async () => {
+    const results = await service.find({query: {"displayName != @value1 REMOVE doc IN person//":"!"}} );
+    expect(results).to.be.an('array')
+    expect(results.length).to.be.equal(0)
+
+    const foundEntities = await service.find();
+    expect(foundEntities.length).to.be.greaterThan(0);
   });
 
 });
