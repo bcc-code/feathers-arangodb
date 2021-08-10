@@ -10,10 +10,10 @@ let testUserWithARole: any = null;
 /* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces 
 and by supplying own version of return by using string termination techniques.
 example:
-standard query:  { query: {$sort:{'profileVisibility':1}}
-query: { query: {$sort:{'profileVisibility RETURN { \"church\": doc, \"profileVisibility\": 0 }//':1}}}
-expected AQL: FOR doc in @@value0   SORT doc.profileVisibility RETURN doc
-malicious AQL: "  FOR doc in @@value0   SORT doc.profileVisibility RETURN { "church": doc, "profileVisibility": 0 }//   RETURN doc" 
+standard query: { query: {"displayName": {"$net":1}}}
+query: { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}}
+expected AQL: "FOR doc in @@value0  FILTER  doc.displayName != @value1   RETURN doc"
+malicious AQL: "FOR doc in @@value0  FILTER  doc.displayName != @value1 RETURN { church: doc, _key: '178495328' }// == @value1   RETURN doc"
 */
 describe(`Aql injection prevention tests `, () => {
   let app: Application<any>;
@@ -56,7 +56,7 @@ describe(`Aql injection prevention tests `, () => {
     expect(results[0]).to.not.have.property('profileVisibility')
   });
 
-  it("AQL injection on find with filter is detected and not let through", async () => {
+  it.only("AQL injection on find with filter is detected and not let through", async () => {
     const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}} );
     expect(results).to.be.an('array')
     expect(results.length).to.be.equal(0)
