@@ -12,7 +12,7 @@ and by supplying own version of return by using string termination techniques.
 example:
 standard query: { query: {"displayName": {"$net":1}}}
 query: { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}}
-expected AQL: "FOR doc in @@value0  FILTER  doc.displayName != @value1   RETURN doc"
+expected AQL: "FOR doc in @@value0  FILTER  doc.displayName == @value1   RETURN doc"
 malicious AQL: "FOR doc in @@value0  FILTER  doc.displayName != @value1 RETURN { church: doc, _key: '178495328' }// == @value1   RETURN doc"
 */
 describe(`Aql injection prevention tests `, () => {
