@@ -11,6 +11,14 @@
         "cwd": "${workspaceFolder}",
         "restart": true
       },
+      {
+        "name": "Attach to Mocha - debug tests",
+        "type": "node",
+        "request": "attach",
+        "port": 9555,
+        "address": "localhost",
+        "restart": true
+    }
     ],
     "skipFiles": ["<node_internals>/**"]
 }

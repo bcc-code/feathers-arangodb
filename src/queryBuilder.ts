@@ -84,6 +84,7 @@ export class QueryBuilder {
       var ret = {};
       _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
+        fieldName = this.sanitizeFieldName(fieldName)
         _set(ret, fieldName, docName + "." + fieldName);
       });
       filter = aql.join(
@@ -98,6 +99,17 @@ export class QueryBuilder {
     }
     this.returnFilter = filter;
     return filter;
+  }
+
+  // this function strips query and prevents AQL injection
+  sanitizeFieldName(fieldName: string): string { ///TODO: add logging when it actually do something
+    let tempValue = fieldName.split(' ')[0] //we only expect single words here in normal circumstances
+    tempValue = tempValue.replace(/\/\//g, ''); //this removes '//' from query
+    tempValue = tempValue.replace(/:/g, ''); //this removes ':' from query
+    if(tempValue !== fieldName) {
+        console.warn(`String was sanitized, input: ${fieldName}, output: ${tempValue}`)
+    }
+    return tempValue;
   }
 
   create(
@@ -147,7 +159,7 @@ export class QueryBuilder {
           this.search = addSearch(value, docName,this._collection);
           break;
         default:
-          this.addFilter(key, value, docName, operator);
+          this.addFilter(this.sanitizeFieldName(key), value, docName, operator);
       }
     });
   }
@@ -163,7 +175,7 @@ export class QueryBuilder {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.literal(
-            `${docName}.${key} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
+            `${docName}.${this.sanitizeFieldName(key)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
           );
         }),
         ", "
