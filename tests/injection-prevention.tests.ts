@@ -7,10 +7,17 @@ import { importDB } from "./setup-tests/setup";
 const serviceName = "person";
 let testUserWithARole: any = null;
 
+/* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces 
+and by supplying own version of return by using string termination techniques.
+example:
+standard query:  { query: {$sort:{'profileVisibility':1}}
+query: { query: {$sort:{'profileVisibility RETURN { \"church\": doc, \"profileVisibility\": 0 }//':1}}}
+expected AQL: FOR doc in @@value0   SORT doc.profileVisibility RETURN doc
+malicious AQL: "  FOR doc in @@value0   SORT doc.profileVisibility RETURN { "church": doc, "profileVisibility": 0 }//   RETURN doc" 
+*/
 describe(`Aql injection prevention tests `, () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
-  let authService: IArangoDbService<any>;
 
   before(async () => {
     await importDB()
@@ -29,7 +36,6 @@ describe(`Aql injection prevention tests `, () => {
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
-    authService = <IArangoDbService<any>>app.service("authentication");
  
   });
 
