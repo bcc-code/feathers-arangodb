@@ -106,6 +106,9 @@ export class QueryBuilder {
     let tempValue = fieldName.split(' ')[0] //we only expect single words here in normal circumstances
     tempValue = tempValue.replace(/\/\//g, ''); //this removes '//' from query
     tempValue = tempValue.replace(/:/g, ''); //this removes ':' from query
+    if(tempValue !== fieldName) {
+        console.warn(`String was sanitized, input: ${fieldName}, output: ${tempValue}`)
+    }
     return tempValue;
   }
 
