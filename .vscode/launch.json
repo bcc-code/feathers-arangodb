@@ -12,7 +12,7 @@
         "restart": true
       },
       {
-        "name": "Attach to Mocha - webhook service",
+        "name": "Attach to Mocha - debug tests",
         "type": "node",
         "request": "attach",
         "port": 9555,
