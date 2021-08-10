@@ -57,7 +57,7 @@ describe(`Aql injection prevention tests `, () => {
   });
 
   it("AQL injection on find with filter is detected and not let through", async () => {
-    const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328(current user key)\' }//":"!"}} );
+    const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}} );
     expect(results).to.be.an('array')
     expect(results.length).to.be.equal(0)
   });
