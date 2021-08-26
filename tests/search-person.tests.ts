@@ -9,7 +9,7 @@ const serviceName = "person";
 let testUser: any = null;
 let specialCharactersUser: any = null;
 let userWithMiddleName: any = null;
-describe(`Search & Query tests on the ${serviceName} service `,async () => {
+describe.skip(`Search & Query tests on the ${serviceName} service `,async () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 

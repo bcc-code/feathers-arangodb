@@ -7,7 +7,7 @@ import { importDB } from "./setup-tests/setup";
 const serviceName = "org";
 let testUserWithARole: any = null;
 
-describe(`Search tests on the ${serviceName} service `, () => {
+describe.skip(`Search tests on the ${serviceName} service `, () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 
