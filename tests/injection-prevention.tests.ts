@@ -62,6 +62,17 @@ describe(`Aql injection prevention tests `, () => {
     expect(results.length).to.be.equal(0)
   });
 
+  it("AQL injection on find with filter is detected and not let through, example 2", async () => {
+    try {
+        const results = await service.find({query: {"_key=='178495328'/**/LET/**/activeRole='Developer'/**/UPDATE/**/doc/**/WITH/**/{activeRole}/**/IN/**/person/**/LET/**/asd=1":{"$not":" "},"$limit":-1,"$skip":0} });
+    } catch (error) {
+        expect(error.name === "ArangoError")
+        expect(error.code === 400)
+        return;
+    }
+    assert.fail("Malicious query should result in ArangoError")
+  });
+
   it("AQL injection of REMOVE is detected and not let through", async () => {
     const results = await service.find({query: {"displayName != @value1 REMOVE doc IN person//":"!"}} );
     expect(results).to.be.an('array')
