@@ -102,7 +102,7 @@ export class QueryBuilder {
   }
 
   // this function strips query and prevents AQL injection
-  sanitizeFieldName(fieldName: string): string { ///TODO: add logging when it actually do something
+  sanitizeFieldName(fieldName: string): string {
     let tempValue = fieldName.split(' ')[0] //we only expect single words here in normal circumstances
     tempValue = tempValue.replace(/\/\//g, ''); //this removes '//' from query
     tempValue = tempValue.replace(/\/\*|\*\//g, ''); //this removes '/*' and '*/' from query
