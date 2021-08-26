@@ -7,7 +7,7 @@ import { importDB } from "./setup-tests/setup";
 const serviceName = "person";
 let testUserWithARole: any = null;
 
-/* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces 
+/* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces
 and by supplying own version of return by using string termination techniques.
 example:
 standard query: { query: {"displayName": {"$net":1}}}
@@ -36,7 +36,7 @@ describe(`Aql injection prevention tests `, () => {
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
- 
+
   });
 
   it("AQL injection on find with select is detected and not let through", async () => {
@@ -56,7 +56,7 @@ describe(`Aql injection prevention tests `, () => {
     expect(results[0]).to.not.have.property('profileVisibility')
   });
 
-  it.only("AQL injection on find with filter is detected and not let through", async () => {
+  it("AQL injection on find with filter is detected and not let through", async () => {
     const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}} );
     expect(results).to.be.an('array')
     expect(results.length).to.be.equal(0)
