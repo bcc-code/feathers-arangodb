@@ -121,6 +121,7 @@ export class QueryBuilder {
     if(fieldName.includes('\/') || fieldName.includes(':')) {
       throw new Error("This query is potentially unsafe.")
     }
+    return fieldName;
   }
 
   create(
