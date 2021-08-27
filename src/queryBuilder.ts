@@ -32,7 +32,7 @@ export class QueryBuilder {
     "$search",
     "$calculate"
   ];
-  bindVars: { [key: string]: any } = {};
+  bindVars: { [key: string]: any } = { };
   maxLimit = 1000000000; // A billion records...
   _limit: number = -1;
   _countNeed: string = "";
@@ -41,7 +41,7 @@ export class QueryBuilder {
   filter?: AqlQuery;
   returnFilter?: AqlQuery;
   withStatement?: AqlQuery;
-  tokensStatement?:AqlQuery;
+  tokensStatement?: AqlQuery;
   _collection: string;
   search?: AqlLiteral;
   varCount: number = 0;
@@ -64,10 +64,10 @@ export class QueryBuilder {
           aql.literal(`"${field}":`),
           _isObject(v)
             ? aql.join([
-                aql.literal("{"),
-                this.projectRecursive(v),
-                aql.literal("}"),
-              ])
+              aql.literal("{"),
+              this.projectRecursive(v),
+              aql.literal("}"),
+            ])
             : aql.literal(`${v}`),
         ],
         " "
@@ -81,7 +81,7 @@ export class QueryBuilder {
     let filter = aql.join([aql.literal(`RETURN ${docName}`)]);
     const select = _get(params, "query.$select", null);
     if (select && select.length > 0) {
-      var ret = {};
+      var ret = { };
       _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
         var tempFieldName = this.sanitizeFieldName(fieldName)
@@ -107,9 +107,12 @@ export class QueryBuilder {
     tempValue = tempValue.replace(/\/\//g, ''); //this removes '//' from query
     tempValue = tempValue.replace(/\/\*|\*\//g, ''); //this removes '/*' and '*/' from query
     tempValue = tempValue.replace(/:/g, ''); //this removes ':' from query
-    if(tempValue !== fieldName) {
-        console.warn(`String was sanitized, input was: ${fieldName}, output was: ${tempValue}. This is ran because adapter detected potentially unsafe characters in query. Look into query and adapter queryBuilder to make improvements.`)
-        this.sanitizeFieldName(tempValue)
+    if (tempValue !== fieldName) {
+      console.warn(`String was sanitized,
+          input was: ${fieldName},
+          output was: ${tempValue}.
+          This is ran because adapter detected potentially unsafe characters in query. Look into query and adapter queryBuilder to make improvements.`)
+      this.sanitizeFieldName(tempValue)
     }
     return tempValue;
   }
@@ -158,7 +161,7 @@ export class QueryBuilder {
           this.addSort(value, docName);
           break;
         case "$search":
-          this.search = addSearch(value, docName,this._collection);
+          this.search = addSearch(value, docName, this._collection);
           break;
         default:
           this.addFilter(this.sanitizeFieldName(key), value, docName, operator);
@@ -186,19 +189,19 @@ export class QueryBuilder {
   }
 
 
-  addFilter(key: string, value: any, docName: string = "doc", operator = "" ): QueryBuilder {
+  addFilter(key: string, value: any, docName: string = "doc", operator = ""): QueryBuilder {
 
-    const stack = (fOpt: string, arg1: AqlValue, arg2: AqlValue, equality: AqlValue ) => {
+    const stack = (fOpt: string, arg1: AqlValue, arg2: AqlValue, equality: AqlValue) => {
       this.filter = aql.join([this.filter, arg1, equality, arg2], " ");
       delete value[fOpt];
       return this.addFilter(key, value, docName, operator);
     };
 
     const valueIsAPrimitiveType = _isString(value) || _isBoolean(value) || _isNumber(value)
-    const stringValueOfvalue:any = Object.keys(value)[0]
+    const stringValueOfvalue: any = Object.keys(value)[0]
     const valueIsAReservedWord = this.reserved.includes(stringValueOfvalue)
 
-    if ((typeof value === "object" && _isEmpty(value)) ) return this;
+    if ((typeof value === "object" && _isEmpty(value))) return this;
 
     if (this.filter == null) {
       this.filter = aql``;
