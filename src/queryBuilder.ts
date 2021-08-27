@@ -84,8 +84,8 @@ export class QueryBuilder {
       var ret = {};
       _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
-        fieldName = this.sanitizeFieldName(fieldName)
-        _set(ret, fieldName, docName + "." + fieldName);
+        var tempFieldName = this.sanitizeFieldName(fieldName)
+        _set(ret, tempFieldName, docName + "." + tempFieldName);
       });
       filter = aql.join(
         [
@@ -108,7 +108,8 @@ export class QueryBuilder {
     tempValue = tempValue.replace(/\/\*|\*\//g, ''); //this removes '/*' and '*/' from query
     tempValue = tempValue.replace(/:/g, ''); //this removes ':' from query
     if(tempValue !== fieldName) {
-        console.warn(`String was sanitized, input: ${fieldName}, output: ${tempValue}`)
+        console.warn(`String was sanitized, input was: ${fieldName}, output was: ${tempValue}. This is ran because adapter detected potentially unsafe characters in query. Look into query and adapter queryBuilder to make improvements.`)
+        this.sanitizeFieldName(tempValue)
     }
     return tempValue;
   }
