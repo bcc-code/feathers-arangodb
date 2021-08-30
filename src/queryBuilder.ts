@@ -11,6 +11,7 @@ import { aql } from "arangojs";
 import { AqlQuery, AqlValue } from "arangojs/aql";
 import { AqlLiteral } from "arangojs/aql";
 import { addSearch } from "./searchBuilder"
+import sanitizeFieldName from "./sanitizeQuery";
 
 export class QueryBuilder {
   reserved = [
@@ -84,7 +85,7 @@ export class QueryBuilder {
       var ret = { };
       _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
-        var tempFieldName = this.sanitizeFieldName(fieldName)
+        var tempFieldName = sanitizeFieldName(fieldName)
         _set(ret, tempFieldName, docName + "." + tempFieldName);
       });
       filter = aql.join(
@@ -99,22 +100,6 @@ export class QueryBuilder {
     }
     this.returnFilter = filter;
     return filter;
-  }
-
-  // this function strips query and prevents AQL injection
-  sanitizeFieldName(fieldName: string): string {
-    let tempValue = fieldName.split(' ')[0] //we only expect single words here in normal circumstances
-    tempValue = tempValue.replace(/\/\//g, ''); //this removes '//' from query
-    tempValue = tempValue.replace(/\/\*|\*\//g, ''); //this removes '/*' and '*/' from query
-    tempValue = tempValue.replace(/:/g, ''); //this removes ':' from query
-    if (tempValue !== fieldName) {
-      console.warn(`String was sanitized,
-          input was: ${fieldName},
-          output was: ${tempValue}.
-          This is ran because adapter detected potentially unsafe characters in query. Look into query and adapter queryBuilder to make improvements.`)
-      this.sanitizeFieldName(tempValue)
-    }
-    return tempValue;
   }
 
   create(
@@ -164,7 +149,7 @@ export class QueryBuilder {
           this.search = addSearch(value, docName, this._collection);
           break;
         default:
-          this.addFilter(this.sanitizeFieldName(key), value, docName, operator);
+          this.addFilter(sanitizeFieldName(key), value, docName, operator);
       }
     });
   }
@@ -180,7 +165,7 @@ export class QueryBuilder {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.literal(
-            `${docName}.${this.sanitizeFieldName(key)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
+            `${docName}.${sanitizeFieldName(key)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
           );
         }),
         ", "
