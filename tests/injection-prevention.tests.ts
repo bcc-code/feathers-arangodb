@@ -7,7 +7,7 @@ import { importDB } from "./setup-tests/setup";
 const serviceName = "person";
 let testUserWithARole: any = null;
 
-/* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces 
+/* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces
 and by supplying own version of return by using string termination techniques.
 example:
 standard query: { query: {"displayName": {"$net":1}}}
@@ -36,7 +36,7 @@ describe(`Aql injection prevention tests `, () => {
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
- 
+
   });
 
   it("AQL injection on find with select is detected and not let through", async () => {
@@ -56,10 +56,21 @@ describe(`Aql injection prevention tests `, () => {
     expect(results[0]).to.not.have.property('profileVisibility')
   });
 
-  it.only("AQL injection on find with filter is detected and not let through", async () => {
+  it("AQL injection on find with filter is detected and not let through", async () => {
     const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}} );
     expect(results).to.be.an('array')
     expect(results.length).to.be.equal(0)
+  });
+
+  it("AQL injection on find with filter is detected and not let through, example 2", async () => {
+    try {
+        const results = await service.find({query: {"_key=='178495328'/**/LET/**/activeRole='Developer'/**/UPDATE/**/doc/**/WITH/**/{activeRole}/**/IN/**/person/**/LET/**/asd=1":{"$not":" "},"$limit":-1,"$skip":0} });
+    } catch (error) {
+        expect(error.name === "ArangoError")
+        expect(error.code === 400)
+        return;
+    }
+    assert.fail("Malicious query should result in ArangoError")
   });
 
   it("AQL injection of REMOVE is detected and not let through", async () => {
