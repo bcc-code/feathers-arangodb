@@ -4,10 +4,12 @@
 
   import { aql } from "arangojs";
   import { AqlLiteral } from "arangojs/aql";
+  import sanitizeFieldName from "./sanitizeQuery";
 
   function addSearch(query: any, docName: string = "doc",collection:string = "person"):AqlLiteral {
 
     const queryNumber = parseInt(query) || 0
+    query =  sanitizeFieldName(query);
 
     let searchQuery:AqlLiteral = aql.literal(`No query defined`)
     switch(collection) {
