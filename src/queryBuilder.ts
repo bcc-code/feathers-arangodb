@@ -85,7 +85,7 @@ export class QueryBuilder {
       var ret = { };
       _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
-        var tempFieldName = sanitizeFieldName(fieldName)
+        var tempFieldName = sanitizeFieldName(fieldName, true)
         _set(ret, tempFieldName, docName + "." + tempFieldName);
       });
       filter = aql.join(
@@ -149,7 +149,7 @@ export class QueryBuilder {
           this.search = addSearch(value, docName, this._collection);
           break;
         default:
-          this.addFilter(sanitizeFieldName(key), value, docName, operator);
+          this.addFilter(sanitizeFieldName(key, true), value, docName, operator);
       }
     });
   }
@@ -165,7 +165,7 @@ export class QueryBuilder {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.literal(
-            `${docName}.${sanitizeFieldName(key)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
+            `${docName}.${sanitizeFieldName(key, true)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
           );
         }),
         ", "
