@@ -26,6 +26,7 @@ describe(`Aql injection prevention tests `, () => {
       `/${serviceName}`,
       ArangoDbService({
         collection: 'person',
+        view: 'person_view',
         database: "TEST",
         authType: AUTH_TYPES.BASIC_AUTH,
         username: "root",
@@ -97,4 +98,14 @@ describe(`Aql injection prevention tests `, () => {
     expect(results).to.not.be.an('array')
   });
 
+  it("Aql injection on search is detected and not let through", async () => {
+    try {
+      const results = await service.find({query: {"$search":"\'\'\')) OR doc.a != 1 LIMIT 0,1 UPDATE { _key: \'178509735\', activeRole: \'Developer\' } IN person RETURN {}//\'"}});
+    } catch (error) {
+      expect(error.name === "ArangoError")
+      expect(error.code === 400)
+      return;
+    }
+    assert.fail("Malicious query should result in ArangoError")
+  })
 });
