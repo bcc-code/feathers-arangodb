@@ -269,65 +269,6 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
       expect(result[0].name).to.eq('Alice');
     });
 
-    describe('falsy values', () => {
-
-      beforeEach(async () => {
-        const philip = await service.create({ name: 'Philip', age: 0});
-        _ids.philip = philip[idProp];
-        const steven = await service.create({ name: 'Steven'});
-        _ids.steven = steven[idProp];
-      });
-
-      it('can $ne to 0', async () => {
-        const params = {
-          query: {age: {$ne: 0}, $sort: {name: 1}}
-        }
-        const result = <Array<any>>await service.find(params)
-        expect(result.length).to.eq(4)
-        expect(result[0].name).to.eq('Alice')
-        expect(result[1].name).to.eq('Bob')
-        expect(result[2].name).to.eq('Doug')
-        expect(result[3].name).to.eq('Steven')
-      })
-
-      it('can $gt than 0', async () => {
-        const params = {
-          query: {age: {$gt: 0}, $sort: {name: 1}}
-        }
-        const result = <Array<any>>await service.find(params)
-        expect(result.length).to.eq(3)
-        expect(result[0].name).to.eq('Alice')
-        expect(result[1].name).to.eq('Bob')
-        expect(result[2].name).to.eq('Doug')
-      })
-
-      it('can $ne to null', async () => {
-        const params = {
-          query: {age: {$ne: null}, $sort: {name: 1}}
-        }
-        const result = <Array<any>>await service.find(params)
-        expect(result.length).to.eq(4)
-        expect(result[0].name).to.eq('Alice')
-        expect(result[1].name).to.eq('Bob')
-        expect(result[2].name).to.eq('Doug')
-        expect(result[3].name).to.eq('Philip')
-      })
-
-      it('can equal to null', async () => {
-        const params = {
-          query: {age: null}
-        }
-        const result = <Array<any>>await service.find(params)
-        expect(result.length).to.eq(1)
-        expect(result[0].name).to.eq('Steven')
-      })
-
-      afterEach(async () => {
-        await service.remove(_ids.philip);
-        await service.remove(_ids.steven);
-      });
-    })
-
     describe('special filters', () => {
 
       it('can $sort', async () => {
