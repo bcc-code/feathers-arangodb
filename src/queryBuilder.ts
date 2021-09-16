@@ -175,18 +175,20 @@ export class QueryBuilder {
 
 
   addFilter(key: string, value: any, docName: string = "doc", operator = ""): QueryBuilder {
-
     const stack = (fOpt: string, arg1: AqlValue, arg2: AqlValue, equality: AqlValue) => {
       this.filter = aql.join([this.filter, arg1, equality, arg2], " ");
       delete value[fOpt];
       return this.addFilter(key, value, docName, operator);
     };
 
-    const valueIsAPrimitiveType = _isString(value) || _isBoolean(value) || _isNumber(value)
-    const stringValueOfvalue: any = Object.keys(value)[0]
+    const valueIsAPrimitiveType = _isString(value) || _isBoolean(value) || _isNumber(value) || value === null
+    let stringValueOfvalue = ''
+    if(!valueIsAPrimitiveType)
+      stringValueOfvalue = Object.keys(value)[0]
+
     const valueIsAReservedWord = this.reserved.includes(stringValueOfvalue)
 
-    if ((typeof value === "object" && _isEmpty(value))) return this;
+    if ((_isObject(value) && _isEmpty(value))) return this;
 
     if (this.filter == null) {
       this.filter = aql``;
@@ -204,56 +206,56 @@ export class QueryBuilder {
         " "
       );
       return this;
-    } else if (typeof value === "object" && value["$in"]) {
+    } else if (typeof value === "object" && value["$in"] !== undefined) {
       return stack(
         "$in",
         aql`${value["$in"]}`,
         aql.literal(`${docName}.${key}`),
         aql.literal("ANY ==")
       );
-    } else if (typeof value === "object" && value["$nin"]) {
+    } else if (typeof value === "object" && value["$nin"] !== undefined) {
       return stack(
         "$nin",
         aql`${value["$nin"]}`,
         aql.literal(`${docName}.${key}`),
         aql.literal("NONE ==")
       );
-    } else if (typeof value === "object" && value["$not"]) {
+    } else if (typeof value === "object" && value["$not"] !== undefined) {
       return stack(
         "$not",
         aql.literal(`${docName}.${key}`),
         aql`${value["$not"]}`,
         aql.literal("!=")
       );
-    } else if (typeof value === "object" && value["$lt"]) {
+    } else if (typeof value === "object" && value["$lt"] !== undefined) {
       return stack(
         "$lt",
         aql.literal(`${docName}.${key}`),
         aql`${value["$lt"]}`,
         aql.literal("<")
       );
-    } else if (typeof value === "object" && value["$lte"]) {
+    } else if (typeof value === "object" && value["$lte"] !== undefined) {
       return stack(
         "$lte",
         aql.literal(`${docName}.${key}`),
         aql`${value["$lte"]}`,
         aql.literal("<=")
       );
-    } else if (typeof value === "object" && value["$gt"]) {
+    } else if (typeof value === "object" && value["$gt"] !== undefined) {
       return stack(
         "$gt",
         aql.literal(`${docName}.${key}`),
         aql`${value["$gt"]}`,
         aql.literal(">")
       );
-    } else if (typeof value === "object" && value["$gte"]) {
+    } else if (typeof value === "object" && value["$gte"] !== undefined) {
       return stack(
         "$gte",
         aql.literal(`${docName}.${key}`),
         aql`${value["$gte"]}`,
         aql.literal(">=")
       );
-    } else if (typeof value === "object" && value["$ne"]) {
+    } else if (typeof value === "object" && value["$ne"] !== undefined) {
       return stack(
         "$ne",
         aql.literal(`${docName}.${key}`),
