@@ -32,7 +32,7 @@ describe.skip(`Search tests on the application service `, () => {
 
   });
 
-  it.only("Search - application", async () => {
+  it("Search - application", async () => {
     const results = await service.find({ query: { $search: 'Samvirk' } });
     expect(results[0]._id).to.eq("application/522409136");
   });
