@@ -26,6 +26,7 @@
         `);
         break;
       case 'org':
+      case 'application':
         searchQuery = aql.literal(`${generateFuzzyStatement([{name:'name', analyzer:'bcc_text',type:'string'}],query,docName)}
         `);
         break;
