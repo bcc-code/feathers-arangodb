@@ -12,7 +12,7 @@ sanitizeFieldName(fieldName: string, removeSpaces: boolean = true): string {
         input was: ${fieldName},
         output was: ${tempValue}.
         This is ran because adapter detected potentially unsafe characters in query. Look into query and adapter queryBuilder to make improvements.`)
-    sanitizeFieldName(tempValue, removeSpaces)
+    return sanitizeFieldName(tempValue, removeSpaces)
   }
   return tempValue;
 }
