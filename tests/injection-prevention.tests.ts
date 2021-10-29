@@ -21,6 +21,9 @@ describe(`Aql injection prevention tests `, () => {
 
   before(async () => {
     await importDB()
+  })
+
+  beforeEach(async () => {
     app = feathers();
     app.use(
       `/${serviceName}`,
@@ -107,5 +110,33 @@ describe(`Aql injection prevention tests `, () => {
       return;
     }
     assert.fail("Malicious query should result in ArangoError")
+  })
+
+  it.only('Aql injection on create authentication', async () => {
+    const authServiceName = 'authentication';
+    app = feathers();
+    app.use(
+      `/${authServiceName}`,
+      ArangoDbService({
+        collection: 'authentication',
+        database: "TEST",
+        authType: AUTH_TYPES.BASIC_AUTH,
+        username: "root",
+        password: "root",
+        dbConfig: {
+          url: "http://localhost:8529",
+        }
+      })
+    );
+    service = <IArangoDbService<any>>app.service(serviceName);
+
+    try {
+      const results = await service.create({query: {"strategy": "apiKey", "token": {"_key!=@value1/:**:/RETURN/:**:/doc/:/":1}}});
+    } catch (error) {
+      expect(error.name === "ArangoError")
+      expect(error.code === 400)
+      return;
+    }
+    assert.fail("Malicious query should result in ArangoError.")
   })
 });
