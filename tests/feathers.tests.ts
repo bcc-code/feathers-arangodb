@@ -330,7 +330,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
 
     describe('special filters', () => {
 
-      it('can $sort', async () => {
+      it.only('can $sort', async () => {
         const params = {
           query: { $sort: { name: 1 } }
         };
@@ -502,6 +502,23 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result[0].name).to.eq('Alice');
         expect(result[1].name).to.eq('Doug');
       });
+
+      it('can handle mixed OR and AND in one query', async () => {
+        const params = {
+          query: {
+            $or:[{
+              age: 32,
+            },
+            {
+              age:25,
+            }],
+            name: "Bob",
+          },
+        }
+        const result = <any[]>await service.find(params)
+        console.log(result)
+        expect(result.length).to.eq(1)
+      })
     });
 
     describe('paginate', () => {
@@ -738,13 +755,3 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
   })
 
 });
-
-function getTestData(key: string | number): any {
-  const data = {
-    1: {
-      name: 'Alice',
-      age: 23,
-      color: 'blue'
-    }
-  };
-}

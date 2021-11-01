@@ -126,12 +126,14 @@ export class QueryBuilder {
       const testKey = key.toLowerCase();
       const value = query[key];
       switch (testKey) {
-        case "$or":
-          const aValue = Array.isArray(value) ? value : [value];
-          aValue.forEach((item) =>
-            this._runCheck(item, docName, returnDocName, "OR")
-          );
-          break;
+        // case "$or":
+        //   const aValue = Array.isArray(value) ? value : [value];
+        //   aValue.forEach((item) =>
+        //     this._runCheck(item, docName, returnDocName, "OR")
+        //   );
+
+        //   console.log(this.filter)
+        //   break;
         case "$select":
         case "$resolve":
         case "$calculate":
@@ -148,10 +150,62 @@ export class QueryBuilder {
         case "$search":
           this.search = addSearch(value, docName, this._collection);
           break;
-        default:
-          this.addFilter(sanitizeFieldName(key, true), value, docName, operator);
+        // default:
+        //   this.addFilter(sanitizeFieldName(key, true), value, docName, operator);
       }
     });
+    this.filter = this._filterFromObject(query, docName)
+  }
+
+  _filterFromObject(
+    filterObject: boolean | number | string | null | object,
+    prefix: string
+  ): AqlQuery {
+    if(typeof filterObject !== 'object' || filterObject === null){
+      return aql.join([aql.literal(prefix), aql`${filterObject}`], ' == ')
+    }
+    const conditions: AqlQuery[] = []
+    for(const [key, value] of Object.entries(filterObject)){
+      let operator;
+      switch(key) {
+        case '$in': operator = " ANY == "; break;
+        case '$nin': operator = " NONE == "; break;
+        case '$not':
+        case '$ne': operator = " != "; break;
+        case '$lt': operator = " < "; break;
+        case '$lte': operator = " <= "; break;
+        case '$gt': operator = " > "; break;
+        case '$gte': operator = " >= "; break;
+      }
+      if(operator){
+        conditions.push(aql.join([
+          aql.literal(prefix),
+          aql`${value}`
+        ], operator))
+      }
+      else if (!this.reserved.includes(key)){
+        conditions.push(this._filterFromObject(value, `${prefix}.${sanitizeFieldName(key, true)}`))
+      }
+
+      else if(key === '$or'){
+        conditions.push(this._filterFromArray(value, prefix, " OR "))
+      }
+
+      else if(key === "$and") {
+        conditions.push(this._filterFromArray(value, prefix, " AND "))
+      }
+    }
+    return aql.join(conditions, " AND ")
+  }
+
+  _filterFromArray(
+    filters: any[],
+    prefix: string,
+    operator: string,
+  ): AqlQuery {
+    const conditions = filters.map((f: any) => this._filterFromObject(f, prefix))
+    const combined = aql.join(conditions, operator) 
+    return aql.join([aql.literal('('), combined, aql.literal(')')])
   }
 
   get limit(): AqlValue {
@@ -193,6 +247,7 @@ export class QueryBuilder {
     if (this.filter == null) {
       this.filter = aql``;
     } else {
+      console.log(this.filter.query)
       if (this.filter.query != "" && (valueIsAPrimitiveType || valueIsAReservedWord)) {
         this.filter = aql.join([this.filter, aql.literal(`${operator}`)], " ");
         operator = "AND";

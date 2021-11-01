@@ -112,7 +112,7 @@ describe(`Aql injection prevention tests `, () => {
     assert.fail("Malicious query should result in ArangoError")
   })
 
-  it.only('Aql injection on create authentication', async () => {
+  it('Aql injection on create authentication', async () => {
     const authServiceName = 'authentication';
     app = feathers();
     app.use(
