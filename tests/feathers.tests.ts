@@ -330,7 +330,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
 
     describe('special filters', () => {
 
-      it.only('can $sort', async () => {
+      it('can $sort', async () => {
         const params = {
           query: { $sort: { name: 1 } }
         };
@@ -407,7 +407,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result[0].name).to.eq('Bob');
       });
 
-      it('can $in', async () => {
+      it.only('can $in', async () => {
         const params = {
           query: { name: { $in: ['Alice', 'Bob'] }, $sort: { name: 1 } }
         };

@@ -28,6 +28,7 @@ export class QueryBuilder {
     "$ne",
     "$not",
     "$or",
+    '$and',
     "$aql",
     "$resolve",
     "$search",
@@ -160,7 +161,7 @@ export class QueryBuilder {
   _filterFromObject(
     filterObject: boolean | number | string | null | object,
     prefix: string
-  ): AqlQuery {
+  ): AqlQuery | undefined {
     if(typeof filterObject !== 'object' || filterObject === null){
       return aql.join([aql.literal(prefix), aql`${filterObject}`], ' == ')
     }
@@ -184,17 +185,24 @@ export class QueryBuilder {
         ], operator))
       }
       else if (!this.reserved.includes(key)){
-        conditions.push(this._filterFromObject(value, `${prefix}.${sanitizeFieldName(key, true)}`))
+        const filter = this._filterFromObject(value, `${prefix}.${sanitizeFieldName(key, true)}`)
+        if(filter)
+          conditions.push(filter)
       }
 
-      else if(key === '$or'){
-        conditions.push(this._filterFromArray(value, prefix, " OR "))
+      let logicalOperator: string = "";
+      if(key === '$or'){
+        logicalOperator = ' OR '
       }
-
-      else if(key === "$and") {
-        conditions.push(this._filterFromArray(value, prefix, " AND "))
+      if(key === "$and") {
+        logicalOperator = ' AND '
       }
+      const filter = logicalOperator ? this._filterFromArray(value, prefix, logicalOperator) : undefined
+      if(filter)
+        conditions.push(filter)
     }
+    console.log(conditions)
+    if(!conditions.length) return undefined
     return aql.join(conditions, " AND ")
   }
 
