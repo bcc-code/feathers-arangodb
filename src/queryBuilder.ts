@@ -124,7 +124,6 @@ export class QueryBuilder {
     query: any,
     docName: string = "doc",
     returnDocName: string = "doc",
-    operator = "AND"
   ) {
     if (!query || _isEmpty(query)) return this;
     const queryParamaters = Object.keys(query)
@@ -150,18 +149,18 @@ export class QueryBuilder {
           break;
       }
     });
-    this.filter = this._filterFromObject(query, docName)
+    this.filter = this._aqlFilterFromFeathersQuery(query, docName)
   }
 
-  _filterFromObject(
-    filterObject: boolean | number | string | null | object,
-    prefix: string
+  _aqlFilterFromFeathersQuery(
+    feathersQuery: boolean | number | string | null | object,
+    aqlFilterVar: string
   ): AqlQuery | undefined {
-    if(typeof filterObject !== "object" || filterObject === null){
-      return aql.join([aql.literal(prefix), aql`${filterObject}`], " == ")
+    if(typeof feathersQuery !== "object" || feathersQuery === null){
+      return aql.join([aql.literal(aqlFilterVar), aql`${feathersQuery}`], " == ")
     }
-    const conditions: (AqlQuery | undefined)[] = []
-    for(const [key, value] of Object.entries(filterObject)){
+    const aqlFilters: (AqlQuery | undefined)[] = []
+    for(const [key, value] of Object.entries(feathersQuery)){
       let operator;
       switch(key) {
         case "$in": operator = " ANY == "; break;
@@ -174,39 +173,39 @@ export class QueryBuilder {
         case "$gte": operator = " <= "; break;
       }
       if(operator){
-        conditions.push(aql.join([
+        aqlFilters.push(aql.join([
           aql`${value}`,
-          aql.literal(prefix),
+          aql.literal(aqlFilterVar),
         ], operator))
       }
       else if (!this.reserved.includes(key)){
-        conditions.push(this._filterFromObject(value, `${prefix}.${sanitizeFieldName(key, true)}`))
+        aqlFilters.push(this._aqlFilterFromFeathersQuery(value, `${aqlFilterVar}.${sanitizeFieldName(key, true)}`))
       }
 
       if(key === "$or"){
-        conditions.push(this._filterFromArray(value, prefix, LogicalOperator.Or))
+        aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.Or))
       }
       if(key === "$and") {
-        conditions.push(this._filterFromArray(value, prefix, LogicalOperator.And))
+        aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.And))
       }
     }
-    return this._joinFilters(conditions, LogicalOperator.And)
+    return this._joinAqlFiltersWithOperator(aqlFilters, LogicalOperator.And)
   }
 
-  _filterFromArray(
-    filters: any[],
-    prefix: string,
+  _aqlFilterFromFeathersQueryArray(
+    feathersQueries: any[],
+    aqlFilterVar: string,
     operator: LogicalOperator,
   ): AqlQuery | undefined {
-    const conditions = filters.map((f: any) => this._filterFromObject(f, prefix))
-    return this._joinFilters(conditions, operator)
+    const aqlFilters = feathersQueries.map((f: any) => this._aqlFilterFromFeathersQuery(f, aqlFilterVar))
+    return this._joinAqlFiltersWithOperator(aqlFilters, operator)
   }
 
-  _joinFilters(
-    filters: (AqlQuery | undefined)[],
+  _joinAqlFiltersWithOperator(
+    aqlFilters: (AqlQuery | undefined)[],
     operator: LogicalOperator
   ): AqlQuery | undefined{
-    const filtered = filters.filter((c: AqlQuery | undefined) =>  c !== undefined)
+    const filtered = aqlFilters.filter((c: AqlQuery | undefined) =>  c !== undefined)
 
     if(!filtered.length) return undefined
 
