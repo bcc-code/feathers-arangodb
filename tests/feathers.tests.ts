@@ -522,7 +522,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
 
 
 
-      it.only('can handle advanced OR and AND mix', async () => {
+      it('can handle advanced OR and AND mix', async () => {
         const params = {
           query: {
             $and: [
