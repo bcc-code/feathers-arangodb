@@ -13,6 +13,11 @@ import { AqlLiteral } from "arangojs/aql";
 import { addSearch } from "./searchBuilder"
 import sanitizeFieldName from "./sanitizeQuery";
 
+export enum LogicalOperator {
+  And = " AND ",
+  Or = " OR "
+}
+
 export class QueryBuilder {
   reserved = [
     "$select",
@@ -28,6 +33,7 @@ export class QueryBuilder {
     "$ne",
     "$not",
     "$or",
+    "$and",
     "$aql",
     "$resolve",
     "$search",
@@ -118,7 +124,6 @@ export class QueryBuilder {
     query: any,
     docName: string = "doc",
     returnDocName: string = "doc",
-    operator = "AND"
   ) {
     if (!query || _isEmpty(query)) return this;
     const queryParamaters = Object.keys(query)
@@ -126,12 +131,6 @@ export class QueryBuilder {
       const testKey = key.toLowerCase();
       const value = query[key];
       switch (testKey) {
-        case "$or":
-          const aValue = Array.isArray(value) ? value : [value];
-          aValue.forEach((item) =>
-            this._runCheck(item, docName, returnDocName, "OR")
-          );
-          break;
         case "$select":
         case "$resolve":
         case "$calculate":
@@ -148,10 +147,72 @@ export class QueryBuilder {
         case "$search":
           this.search = addSearch(value, docName, this._collection);
           break;
-        default:
-          this.addFilter(sanitizeFieldName(key, true), value, docName, operator);
       }
     });
+    this.filter = this._aqlFilterFromFeathersQuery(query, docName)
+  }
+
+  _aqlFilterFromFeathersQuery(
+    feathersQuery: boolean | number | string | null | object,
+    aqlFilterVar: string
+  ): AqlQuery | undefined {
+    if(typeof feathersQuery !== "object" || feathersQuery === null){
+      return aql.join([aql.literal(aqlFilterVar), aql`${feathersQuery}`], " == ")
+    }
+    const aqlFilters: (AqlQuery | undefined)[] = []
+    for(const [key, value] of Object.entries(feathersQuery)){
+      let operator;
+      switch(key) {
+        case "$in": operator = " ANY == "; break;
+        case "$nin": operator = " NONE == "; break;
+        case "$not":
+        case "$ne": operator = " != "; break;
+        case "$lt": operator = " > "; break;
+        case "$lte": operator = " >= "; break;
+        case "$gt": operator = " < "; break;
+        case "$gte": operator = " <= "; break;
+      }
+      if(operator){
+        aqlFilters.push(aql.join([
+          aql`${value}`,
+          aql.literal(aqlFilterVar),
+        ], operator))
+      }
+      else if (!this.reserved.includes(key)){
+        aqlFilters.push(this._aqlFilterFromFeathersQuery(value, `${aqlFilterVar}.${sanitizeFieldName(key, true)}`))
+      }
+
+      if(key === "$or"){
+        aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.Or))
+      }
+      if(key === "$and") {
+        aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.And))
+      }
+    }
+    return this._joinAqlFiltersWithOperator(aqlFilters, LogicalOperator.And)
+  }
+
+  _aqlFilterFromFeathersQueryArray(
+    feathersQueries: any[],
+    aqlFilterVar: string,
+    operator: LogicalOperator,
+  ): AqlQuery | undefined {
+    const aqlFilters = feathersQueries.map((f: any) => this._aqlFilterFromFeathersQuery(f, aqlFilterVar))
+    return this._joinAqlFiltersWithOperator(aqlFilters, operator)
+  }
+
+  _joinAqlFiltersWithOperator(
+    aqlFilters: (AqlQuery | undefined)[],
+    operator: LogicalOperator
+  ): AqlQuery | undefined{
+    const filtered = aqlFilters.filter((c: AqlQuery | undefined) =>  c !== undefined)
+
+    if(!filtered.length) return undefined
+
+    const combined = aql.join(filtered, operator) 
+    if(operator === LogicalOperator.And)
+      return combined
+    return aql.join([aql.literal("("), combined, aql.literal(")")])
   }
 
   get limit(): AqlValue {
@@ -171,108 +232,5 @@ export class QueryBuilder {
         ", "
       );
     }
-  }
-
-
-  addFilter(key: string, value: any, docName: string = "doc", operator = ""): QueryBuilder {
-    const stack = (fOpt: string, arg1: AqlValue, arg2: AqlValue, equality: AqlValue) => {
-      this.filter = aql.join([this.filter, arg1, equality, arg2], " ");
-      delete value[fOpt];
-      return this.addFilter(key, value, docName, operator);
-    };
-
-    const valueIsAPrimitiveType = _isString(value) || _isBoolean(value) || _isNumber(value) || value === null
-    let stringValueOfvalue = ''
-    if(!valueIsAPrimitiveType)
-      stringValueOfvalue = Object.keys(value)[0]
-
-    const valueIsAReservedWord = this.reserved.includes(stringValueOfvalue)
-
-    if ((_isObject(value) && _isEmpty(value))) return this;
-
-    if (this.filter == null) {
-      this.filter = aql``;
-    } else {
-      if (this.filter.query != "" && (valueIsAPrimitiveType || valueIsAReservedWord)) {
-        this.filter = aql.join([this.filter, aql.literal(`${operator}`)], " ");
-        operator = "AND";
-      }
-    }
-
-    // Build the filters
-    if (valueIsAPrimitiveType) {
-      this.filter = aql.join(
-        [this.filter, aql.literal(`${docName}.${key} ==`), aql`${value}`],
-        " "
-      );
-      return this;
-    } else if (typeof value === "object" && value["$in"] !== undefined) {
-      return stack(
-        "$in",
-        aql`${value["$in"]}`,
-        aql.literal(`${docName}.${key}`),
-        aql.literal("ANY ==")
-      );
-    } else if (typeof value === "object" && value["$nin"] !== undefined) {
-      return stack(
-        "$nin",
-        aql`${value["$nin"]}`,
-        aql.literal(`${docName}.${key}`),
-        aql.literal("NONE ==")
-      );
-    } else if (typeof value === "object" && value["$not"] !== undefined) {
-      return stack(
-        "$not",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$not"]}`,
-        aql.literal("!=")
-      );
-    } else if (typeof value === "object" && value["$lt"] !== undefined) {
-      return stack(
-        "$lt",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$lt"]}`,
-        aql.literal("<")
-      );
-    } else if (typeof value === "object" && value["$lte"] !== undefined) {
-      return stack(
-        "$lte",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$lte"]}`,
-        aql.literal("<=")
-      );
-    } else if (typeof value === "object" && value["$gt"] !== undefined) {
-      return stack(
-        "$gt",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$gt"]}`,
-        aql.literal(">")
-      );
-    } else if (typeof value === "object" && value["$gte"] !== undefined) {
-      return stack(
-        "$gte",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$gte"]}`,
-        aql.literal(">=")
-      );
-    } else if (typeof value === "object" && value["$ne"] !== undefined) {
-      return stack(
-        "$ne",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$ne"]}`,
-        aql.literal("!=")
-      );
-    } else {
-      /* istanbul ignore next */
-      const leftovers = _omit(value, this.reserved);
-      /* istanbul ignore next */
-      if (!_isEmpty(leftovers)) {
-        console.log("DEBUG - leftovers:", leftovers);
-
-        this._runCheck(value, docName + `.${key}`, "AND");
-      }
-    }
-    /* istanbul ignore next */
-    return this;
   }
 }

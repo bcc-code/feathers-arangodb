@@ -16,7 +16,7 @@ import _isEmpty from "lodash/isEmpty";
 import isString from "lodash/isString";
 import omit from "lodash/omit";
 import { AutoDatabse } from "./auto-database";
-import { QueryBuilder } from "./queryBuilder";
+import { LogicalOperator, QueryBuilder } from "./queryBuilder";
 import { GraphVertexCollection } from "arangojs/graph";
 import { ArrayCursor } from "arangojs/cursor";
 import { View } from "arangojs/view";
@@ -416,7 +416,8 @@ export class DbService<T> {
       queryBuilder =  existingQuery
     }
 
-    queryBuilder.addFilter("_key", id, "doc", "AND");
+    const addedfilter = queryBuilder._aqlFilterFromFeathersQuery({_key: id}, "doc");
+    queryBuilder.filter = queryBuilder._joinAqlFiltersWithOperator([queryBuilder.filter, addedfilter], LogicalOperator.And)
 
     const query: AqlQuery = aql.join(
       [
