@@ -13,6 +13,11 @@ import { AqlLiteral } from "arangojs/aql";
 import { addSearch } from "./searchBuilder"
 import sanitizeFieldName from "./sanitizeQuery";
 
+export enum LogicalOperator {
+  And = " AND ",
+  Or = " OR "
+}
+
 export class QueryBuilder {
   reserved = [
     "$select",
@@ -28,7 +33,7 @@ export class QueryBuilder {
     "$ne",
     "$not",
     "$or",
-    '$and',
+    "$and",
     "$aql",
     "$resolve",
     "$search",
@@ -127,14 +132,6 @@ export class QueryBuilder {
       const testKey = key.toLowerCase();
       const value = query[key];
       switch (testKey) {
-        // case "$or":
-        //   const aValue = Array.isArray(value) ? value : [value];
-        //   aValue.forEach((item) =>
-        //     this._runCheck(item, docName, returnDocName, "OR")
-        //   );
-
-        //   console.log(this.filter)
-        //   break;
         case "$select":
         case "$resolve":
         case "$calculate":
@@ -151,8 +148,6 @@ export class QueryBuilder {
         case "$search":
           this.search = addSearch(value, docName, this._collection);
           break;
-        // default:
-        //   this.addFilter(sanitizeFieldName(key, true), value, docName, operator);
       }
     });
     this.filter = this._filterFromObject(query, docName)
@@ -162,58 +157,63 @@ export class QueryBuilder {
     filterObject: boolean | number | string | null | object,
     prefix: string
   ): AqlQuery | undefined {
-    if(typeof filterObject !== 'object' || filterObject === null){
-      return aql.join([aql.literal(prefix), aql`${filterObject}`], ' == ')
+    if(typeof filterObject !== "object" || filterObject === null){
+      return aql.join([aql.literal(prefix), aql`${filterObject}`], " == ")
     }
-    const conditions: AqlQuery[] = []
+    const conditions: (AqlQuery | undefined)[] = []
     for(const [key, value] of Object.entries(filterObject)){
       let operator;
       switch(key) {
-        case '$in': operator = " ANY == "; break;
-        case '$nin': operator = " NONE == "; break;
-        case '$not':
-        case '$ne': operator = " != "; break;
-        case '$lt': operator = " < "; break;
-        case '$lte': operator = " <= "; break;
-        case '$gt': operator = " > "; break;
-        case '$gte': operator = " >= "; break;
+        case "$in": operator = " ANY == "; break;
+        case "$nin": operator = " NONE == "; break;
+        case "$not":
+        case "$ne": operator = " != "; break;
+        case "$lt": operator = " > "; break;
+        case "$lte": operator = " >= "; break;
+        case "$gt": operator = " < "; break;
+        case "$gte": operator = " <= "; break;
       }
       if(operator){
         conditions.push(aql.join([
+          aql`${value}`,
           aql.literal(prefix),
-          aql`${value}`
         ], operator))
       }
       else if (!this.reserved.includes(key)){
-        const filter = this._filterFromObject(value, `${prefix}.${sanitizeFieldName(key, true)}`)
-        if(filter)
-          conditions.push(filter)
+        conditions.push(this._filterFromObject(value, `${prefix}.${sanitizeFieldName(key, true)}`))
       }
 
-      let logicalOperator: string = "";
-      if(key === '$or'){
-        logicalOperator = ' OR '
+      if(key === "$or"){
+        conditions.push(this._filterFromArray(value, prefix, LogicalOperator.Or))
       }
       if(key === "$and") {
-        logicalOperator = ' AND '
+        conditions.push(this._filterFromArray(value, prefix, LogicalOperator.And))
       }
-      const filter = logicalOperator ? this._filterFromArray(value, prefix, logicalOperator) : undefined
-      if(filter)
-        conditions.push(filter)
     }
-    console.log(conditions)
-    if(!conditions.length) return undefined
-    return aql.join(conditions, " AND ")
+    return this._joinFilters(conditions, LogicalOperator.And)
   }
 
   _filterFromArray(
     filters: any[],
     prefix: string,
-    operator: string,
-  ): AqlQuery {
+    operator: LogicalOperator,
+  ): AqlQuery | undefined {
     const conditions = filters.map((f: any) => this._filterFromObject(f, prefix))
-    const combined = aql.join(conditions, operator) 
-    return aql.join([aql.literal('('), combined, aql.literal(')')])
+    return this._joinFilters(conditions, operator)
+  }
+
+  _joinFilters(
+    filters: (AqlQuery | undefined)[],
+    operator: LogicalOperator
+  ): AqlQuery | undefined{
+    const filtered = filters.filter((c: AqlQuery | undefined) =>  c !== undefined)
+
+    if(!filtered.length) return undefined
+
+    const combined = aql.join(filtered, operator) 
+    if(operator === LogicalOperator.And)
+      return combined
+    return aql.join([aql.literal("("), combined, aql.literal(")")])
   }
 
   get limit(): AqlValue {
@@ -233,109 +233,5 @@ export class QueryBuilder {
         ", "
       );
     }
-  }
-
-
-  addFilter(key: string, value: any, docName: string = "doc", operator = ""): QueryBuilder {
-    const stack = (fOpt: string, arg1: AqlValue, arg2: AqlValue, equality: AqlValue) => {
-      this.filter = aql.join([this.filter, arg1, equality, arg2], " ");
-      delete value[fOpt];
-      return this.addFilter(key, value, docName, operator);
-    };
-
-    const valueIsAPrimitiveType = _isString(value) || _isBoolean(value) || _isNumber(value) || value === null
-    let stringValueOfvalue = ''
-    if(!valueIsAPrimitiveType)
-      stringValueOfvalue = Object.keys(value)[0]
-
-    const valueIsAReservedWord = this.reserved.includes(stringValueOfvalue)
-
-    if ((_isObject(value) && _isEmpty(value))) return this;
-
-    if (this.filter == null) {
-      this.filter = aql``;
-    } else {
-      console.log(this.filter.query)
-      if (this.filter.query != "" && (valueIsAPrimitiveType || valueIsAReservedWord)) {
-        this.filter = aql.join([this.filter, aql.literal(`${operator}`)], " ");
-        operator = "AND";
-      }
-    }
-
-    // Build the filters
-    if (valueIsAPrimitiveType) {
-      this.filter = aql.join(
-        [this.filter, aql.literal(`${docName}.${key} ==`), aql`${value}`],
-        " "
-      );
-      return this;
-    } else if (typeof value === "object" && value["$in"] !== undefined) {
-      return stack(
-        "$in",
-        aql`${value["$in"]}`,
-        aql.literal(`${docName}.${key}`),
-        aql.literal("ANY ==")
-      );
-    } else if (typeof value === "object" && value["$nin"] !== undefined) {
-      return stack(
-        "$nin",
-        aql`${value["$nin"]}`,
-        aql.literal(`${docName}.${key}`),
-        aql.literal("NONE ==")
-      );
-    } else if (typeof value === "object" && value["$not"] !== undefined) {
-      return stack(
-        "$not",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$not"]}`,
-        aql.literal("!=")
-      );
-    } else if (typeof value === "object" && value["$lt"] !== undefined) {
-      return stack(
-        "$lt",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$lt"]}`,
-        aql.literal("<")
-      );
-    } else if (typeof value === "object" && value["$lte"] !== undefined) {
-      return stack(
-        "$lte",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$lte"]}`,
-        aql.literal("<=")
-      );
-    } else if (typeof value === "object" && value["$gt"] !== undefined) {
-      return stack(
-        "$gt",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$gt"]}`,
-        aql.literal(">")
-      );
-    } else if (typeof value === "object" && value["$gte"] !== undefined) {
-      return stack(
-        "$gte",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$gte"]}`,
-        aql.literal(">=")
-      );
-    } else if (typeof value === "object" && value["$ne"] !== undefined) {
-      return stack(
-        "$ne",
-        aql.literal(`${docName}.${key}`),
-        aql`${value["$ne"]}`,
-        aql.literal("!=")
-      );
-    } else {
-      /* istanbul ignore next */
-      const leftovers = _omit(value, this.reserved);
-      /* istanbul ignore next */
-      if (!_isEmpty(leftovers)) {
-        console.log("DEBUG - leftovers:", leftovers);
-
-        this._runCheck(value, docName + `.${key}`, "AND");
-      }
-    }
-    /* istanbul ignore next */
-    return this;
   }
 }

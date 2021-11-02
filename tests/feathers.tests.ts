@@ -407,7 +407,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result[0].name).to.eq('Bob');
       });
 
-      it.only('can $in', async () => {
+      it('can $in', async () => {
         const params = {
           query: { name: { $in: ['Alice', 'Bob'] }, $sort: { name: 1 } }
         };
@@ -518,6 +518,33 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         const result = <any[]>await service.find(params)
         console.log(result)
         expect(result.length).to.eq(1)
+      })
+
+
+
+      it.only('can handle advanced OR and AND mix', async () => {
+        const params = {
+          query: {
+            $and: [
+              {$or:[{
+                age: 32,
+              },
+              {
+                age:25,
+              }]},
+              {$or:[{
+                name: "Bob",
+              },
+              {
+                name: "Alice",
+              }]}
+            ]
+          },
+        }
+        const result = <any[]>await service.find(params)
+        console.log(result)
+        expect(result.length).to.eq(1)
+        expect(result[0].name).to.eq("Bob")
       })
     });
 

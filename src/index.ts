@@ -416,7 +416,8 @@ export class DbService<T> {
       queryBuilder =  existingQuery
     }
 
-    queryBuilder.addFilter("_key", id, "doc", "AND");
+
+    queryBuilder.filter = queryBuilder._filterFromObject(id, "doc._key");
 
     const query: AqlQuery = aql.join(
       [
