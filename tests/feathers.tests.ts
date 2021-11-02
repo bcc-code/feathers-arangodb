@@ -518,9 +518,8 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         const result = <any[]>await service.find(params)
         console.log(result)
         expect(result.length).to.eq(1)
+        expect(result[0].age).to.eq(25)
       })
-
-
 
       it('can handle advanced OR and AND mix', async () => {
         const params = {
