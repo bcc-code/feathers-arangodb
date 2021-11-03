@@ -171,22 +171,19 @@ export class QueryBuilder {
         case "$lte": operator = " >= "; break;
         case "$gt": operator = " < "; break;
         case "$gte": operator = " <= "; break;
+        case "$or": aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.Or)); continue;
+        case "$and": aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.And)); continue;
+        case "$size": aqlFilters.push(this._aqlFilterFromFeathersQuery(value, `LENGTH(${aqlFilterVar})`)); continue;
       }
       if(operator){
         aqlFilters.push(aql.join([
           aql`${value}`,
           aql.literal(aqlFilterVar),
         ], operator))
+        continue
       }
-      else if (!this.reserved.includes(key)){
+      if (!this.reserved.includes(key)){
         aqlFilters.push(this._aqlFilterFromFeathersQuery(value, `${aqlFilterVar}.${sanitizeFieldName(key, true)}`))
-      }
-
-      if(key === "$or"){
-        aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.Or))
-      }
-      if(key === "$and") {
-        aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.And))
       }
     }
     return this._joinAqlFiltersWithOperator(aqlFilters, LogicalOperator.And)

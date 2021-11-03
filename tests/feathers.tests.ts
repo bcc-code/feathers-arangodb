@@ -327,7 +327,37 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         await service.remove(_ids.steven);
       });
     })
+    describe('array functions', () => {
+      beforeEach(async () => {
+        const mike = await service.create({ name: 'Mike', age: 0, friends: ['Alice', 'Bob']});
+        _ids.mike = mike[idProp];
 
+        const jake = await service.create({ name: 'Jake', age: 0, friends: ['Doug']});
+        _ids.jake = jake[idProp];
+      });
+      afterEach(async () => {
+        await service.remove(_ids.mike).catch(() => {});
+        await service.remove(_ids.jake).catch(() => {});
+      })
+
+      it('can $size equal to value', async () => {
+        const params = {
+          query: {friends: {$size: 2}}
+        }
+        const result = <Array<any>>await service.find(params)
+        expect(result.length).to.eq(1)
+        expect(result[0].name).to.eq('Mike')
+      })
+      it('can $size greater then value', async () => {
+        const params = {
+          query: {friends: {$size: {$gte: 1}}}
+        }
+        const result = <Array<any>>await service.find(params)
+        expect(result.length).to.eq(2)
+        expect(result[0].name).to.eq('Mike')
+        expect(result[1].name).to.eq('Jake')
+      })
+    })
     describe('special filters', () => {
 
       it('can $sort', async () => {
