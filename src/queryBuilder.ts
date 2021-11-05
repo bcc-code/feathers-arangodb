@@ -64,18 +64,19 @@ export class QueryBuilder {
   }
 
   projectRecursive(o: object): AqlValue {
-    const result = Object.keys(o).map((field: string) => {
+    const result = Object.keys(o).map((field: string, ind: number) => {
       const v: any = _get(o, field);
+      console.log(ind,v)
       return aql.join(
         [
-          aql.literal(`"${field}":`),
+          aql`[${field}]:`,
           _isObject(v)
             ? aql.join([
               aql.literal("{"),
               this.projectRecursive(v),
               aql.literal("}"),
             ])
-            : aql.literal(`${v}`),
+            : v,
         ],
         " "
       );
@@ -89,17 +90,16 @@ export class QueryBuilder {
     const select = _get(params, "query.$select", null);
     if (select && select.length > 0) {
       var ret = { };
-      _set(ret, "_key", docName + "._key");
       select.forEach((fieldName: string) => {
-        var tempFieldName = sanitizeFieldName(fieldName, true)
-        _set(ret, tempFieldName, docName + "." + tempFieldName);
+        var tempFieldName = sanitizeFieldName(fieldName)
+        _set(ret, fieldName, aql.join([aql.literal(docName), aql`[${fieldName}]`], ""));
+        console.log(ret)
       });
       filter = aql.join(
         [
-          aql`RETURN`,
-          aql.literal("{"),
+          aql`RETURN {`,
           this.projectRecursive(ret),
-          aql.literal("}"),
+          aql`}`,
         ],
         " "
       );
@@ -149,15 +149,15 @@ export class QueryBuilder {
           break;
       }
     });
-    this.filter = this._aqlFilterFromFeathersQuery(query, docName)
+    this.filter = this._aqlFilterFromFeathersQuery(query, aql.literal(docName))
   }
 
   _aqlFilterFromFeathersQuery(
     feathersQuery: boolean | number | string | null | object,
-    aqlFilterVar: string
+    aqlFilterVar: AqlQuery | AqlLiteral
   ): AqlQuery | undefined {
     if(typeof feathersQuery !== "object" || feathersQuery === null){
-      return aql.join([aql.literal(aqlFilterVar), aql`${feathersQuery}`], " == ")
+      return aql.join([aqlFilterVar, aql`${feathersQuery}`], " == ")
     }
     const aqlFilters: (AqlQuery | undefined)[] = []
     for(const [key, value] of Object.entries(feathersQuery)){
@@ -173,17 +173,17 @@ export class QueryBuilder {
         case "$gte": operator = " <= "; break;
         case "$or": aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.Or)); continue;
         case "$and": aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.And)); continue;
-        case "$size": aqlFilters.push(this._aqlFilterFromFeathersQuery(value, `LENGTH(${aqlFilterVar})`)); continue;
+        case "$size": aqlFilters.push(this._aqlFilterFromFeathersQuery(value, aql`LENGTH(${aqlFilterVar})`)); continue;
       }
       if(operator){
         aqlFilters.push(aql.join([
           aql`${value}`,
-          aql.literal(aqlFilterVar),
+          aqlFilterVar,
         ], operator))
         continue
       }
       if (!this.reserved.includes(key)){
-        aqlFilters.push(this._aqlFilterFromFeathersQuery(value, `${aqlFilterVar}.${sanitizeFieldName(key, true)}`))
+        aqlFilters.push(this._aqlFilterFromFeathersQuery(value, aql.join([aqlFilterVar, aql`[${key}]`], '')))
       }
     }
     return this._joinAqlFiltersWithOperator(aqlFilters, LogicalOperator.And)
@@ -191,7 +191,7 @@ export class QueryBuilder {
 
   _aqlFilterFromFeathersQueryArray(
     feathersQueries: any[],
-    aqlFilterVar: string,
+    aqlFilterVar: AqlQuery | AqlLiteral,
     operator: LogicalOperator,
   ): AqlQuery | undefined {
     const aqlFilters = feathersQueries.map((f: any) => this._aqlFilterFromFeathersQuery(f, aqlFilterVar))
@@ -209,7 +209,7 @@ export class QueryBuilder {
     const combined = aql.join(filtered, operator) 
     if(operator === LogicalOperator.And)
       return combined
-    return aql.join([aql.literal("("), combined, aql.literal(")")])
+    return aql`(${combined})`
   }
 
   get limit(): AqlValue {
@@ -222,9 +222,11 @@ export class QueryBuilder {
     if (Object.keys(sort).length > 0) {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
-          return aql.literal(
-            `${docName}.${sanitizeFieldName(key, true)} ${parseInt(sort[key]) === -1 ? "DESC" : ""}`
-          );
+          return aql.join([
+            aql.literal(docName),
+            aql`[${key}] `, 
+            aql.literal(parseInt(sort[key]) === -1 ? "DESC" : "")
+          ], '');
         }),
         ", "
       );

@@ -8,8 +8,7 @@
 
   function addSearch(query: any, docName: string = "doc",collection:string = "person"):AqlLiteral {
 
-    const queryNumber = parseInt(query) || 0
-    query =  sanitizeFieldName(query, false);
+    query = sanitizeFieldName(query);
 
     let searchQuery:AqlLiteral = aql.literal(`No query defined`)
     switch(collection) {

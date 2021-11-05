@@ -43,7 +43,7 @@ describe(`Aql injection prevention tests `, () => {
 
   });
 
-  it("AQL injection on find with select is detected and not let through", async () => {
+  it.only("AQL injection on find with select is detected and not let through", async () => {
     let maliciousQueryResults = {};
     try {
         maliciousQueryResults = await service.find({ query: { $select: ["_id", 'profileVisibility\":0,\"church\":doc}//']},});

@@ -416,7 +416,7 @@ export class DbService<T> {
       queryBuilder =  existingQuery
     }
 
-    const addedfilter = queryBuilder._aqlFilterFromFeathersQuery({_key: id}, "doc");
+    const addedfilter = queryBuilder._aqlFilterFromFeathersQuery({_key: id}, aql`doc`);
     queryBuilder.filter = queryBuilder._joinAqlFiltersWithOperator([queryBuilder.filter, addedfilter], LogicalOperator.And)
 
     const query: AqlQuery = aql.join(
