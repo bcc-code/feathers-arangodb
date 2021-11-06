@@ -292,6 +292,7 @@ export class DbService<T> {
   }
 
   public fixKeyReturn(item: any): any {
+    console.log(item)
     const idObj: any = {};
 
     if (typeof item == "object" && item != null) {
@@ -317,7 +318,7 @@ export class DbService<T> {
   ) {
     const cursor: ArrayCursor<T> = <ArrayCursor>(
       await database
-        .query(query, { count: paging, fullCount: paging })
+        .query(query)
         .catch((error) => {
           if (
             error &&
@@ -331,7 +332,11 @@ export class DbService<T> {
           }
         })
     );
-    const unfiltered: T[] = await cursor.map((item) => this.fixKeyReturn(item));
+
+    // const mapped = await cursor.map((item) => item)
+    // console.log(mapped)
+    const unfiltered: T[] = await cursor.map((item) => item);
+    console.log('unfiltered', unfiltered)
     const result = unfiltered.filter((item) => item != null);
 
     if (
@@ -383,6 +388,8 @@ export class DbService<T> {
       " "
     );
 
+    console.log(query)
+
     console.log("DEBUG - aql:", query.query);
     console.log("DEBUG - variables:",query.bindVars)
     const result = (await this._returnMap(
@@ -392,6 +399,8 @@ export class DbService<T> {
       false,
       !_isEmpty(this._paginate)
     )) as any;
+
+    console.log(result)
 
 
 

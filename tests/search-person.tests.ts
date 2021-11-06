@@ -9,7 +9,7 @@ const serviceName = "person";
 let testUser: any = null;
 let specialCharactersUser: any = null;
 let userWithMiddleName: any = null;
-describe.skip(`Search & Query tests on the ${serviceName} service `,async () => {
+describe(`Search & Query tests on the ${serviceName} service `,async () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 
@@ -31,13 +31,14 @@ describe.skip(`Search & Query tests on the ${serviceName} service `,async () => 
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
-    testUser = await service.get('178494230', {});
-    specialCharactersUser = await service.get('430126186', {});
-    userWithMiddleName = await service.get('178508922', {});
+    testUser = await service.get('53182', {});
+    // specialCharactersUser = await service.get('42352', {});
+    // userWithMiddleName = await service.get('13629', {});
   });
 
-  it("Search - PersonID", async () => {
-    const results = await service.find({ query: { $search: `${testUser.personID}` } });
+  it.only("Search - PersonID", async () => {
+    const results = await service.find({ query: { $search: 'Cloia Jerrits' } });
+    console.log(results)
     expect(results[0].personID).to.eq(testUser.personID);
   });
 
@@ -48,7 +49,8 @@ describe.skip(`Search & Query tests on the ${serviceName} service `,async () => 
 
   it("Search - Full name no error", async () => {
     const results = await service.find({ query: { $search: testUser.displayName } });
-    expect(results[0].personID).to.eq(testUser.personID);
+    console.log(results)
+    expect(results[0]?.personID).to.eq(testUser.personID);
   });
 
   it("Search - Case insensitive uppercase", async () => {

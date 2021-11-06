@@ -1,1 +1,1 @@
-{"database":"MEMBERS_TEST_TEMPLATE","lastTickAtDumpStart":"1193443984","properties":{"id":"4010649","name":"MEMBERS_TEST_TEMPLATE","isSystem":false,"sharding":"single","replicationFactor":3,"writeConcern":1,"path":""}}
+{"database":"TEST","lastTickAtDumpStart":"4092435","properties":{"id":"156","name":"TEST","isSystem":false}}
