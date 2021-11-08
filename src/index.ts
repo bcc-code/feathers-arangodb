@@ -317,7 +317,7 @@ export class DbService<T> {
   ) {
     const cursor: ArrayCursor<T> = <ArrayCursor>(
       await database
-        .query(query, { count: paging, fullCount: paging })
+        .query(query)
         .catch((error) => {
           if (
             error &&
@@ -331,7 +331,7 @@ export class DbService<T> {
           }
         })
     );
-    const unfiltered: T[] = await cursor.map((item) => this.fixKeyReturn(item));
+    const unfiltered: T[] = await cursor.map((item) => item);
     const result = unfiltered.filter((item) => item != null);
 
     if (
@@ -343,7 +343,7 @@ export class DbService<T> {
 
     if (paging) {
       return {
-        total: cursor.extra.stats?.fullCount,
+        total: cursor.extra.stats?.scannedFull,
         data: result,
       };
     }
@@ -383,6 +383,7 @@ export class DbService<T> {
       " "
     );
 
+
     console.log("DEBUG - aql:", query.query);
     console.log("DEBUG - variables:",query.bindVars)
     const result = (await this._returnMap(
@@ -393,10 +394,7 @@ export class DbService<T> {
       !_isEmpty(this._paginate)
     )) as any;
 
-
-
     if (!_isEmpty(this._paginate)) {
-
       return {
         total: result.total,
         // @ts-ignore   Will be defined based on previous logic
@@ -416,7 +414,7 @@ export class DbService<T> {
       queryBuilder =  existingQuery
     }
 
-    const addedfilter = queryBuilder._aqlFilterFromFeathersQuery({_key: id}, "doc");
+    const addedfilter = queryBuilder._aqlFilterFromFeathersQuery({_key: id}, aql`doc`);
     queryBuilder.filter = queryBuilder._joinAqlFiltersWithOperator([queryBuilder.filter, addedfilter], LogicalOperator.And)
 
     const query: AqlQuery = aql.join(

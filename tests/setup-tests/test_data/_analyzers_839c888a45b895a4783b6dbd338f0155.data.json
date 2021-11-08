@@ -1,0 +1,1 @@
+{"type":2300,"data":{"_key":"bcc_text","_id":"_analyzers/bcc_text","_rev":"_dDq7ICu---","features":["position","norm","frequency"],"name":"bcc_text","properties":{"locale":"en.utf-8","case":"lower","accent":false,"stemming":false,"edgeNgram":{"min":2,"max":20,"preserveOriginal":true}},"revision":0,"type":"text"}}

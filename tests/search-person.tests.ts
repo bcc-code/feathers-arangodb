@@ -9,7 +9,7 @@ const serviceName = "person";
 let testUser: any = null;
 let specialCharactersUser: any = null;
 let userWithMiddleName: any = null;
-describe.skip(`Search & Query tests on the ${serviceName} service `,async () => {
+describe(`Search & Query tests on the ${serviceName} service `,async () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 
@@ -31,13 +31,14 @@ describe.skip(`Search & Query tests on the ${serviceName} service `,async () => 
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
-    testUser = await service.get('178494230', {});
-    specialCharactersUser = await service.get('430126186', {});
-    userWithMiddleName = await service.get('178508922', {});
+    testUser = await service.get('53182', {});
+    specialCharactersUser = await service.get('42352', {});
+    userWithMiddleName = await service.get('13629', {});
+    await new Promise((res) => setTimeout(res, 1000))
   });
 
   it("Search - PersonID", async () => {
-    const results = await service.find({ query: { $search: `${testUser.personID}` } });
+    const results = await service.find({ query: { $search: 'Cloia Jerrits' } });
     expect(results[0].personID).to.eq(testUser.personID);
   });
 
@@ -48,7 +49,7 @@ describe.skip(`Search & Query tests on the ${serviceName} service `,async () => 
 
   it("Search - Full name no error", async () => {
     const results = await service.find({ query: { $search: testUser.displayName } });
-    expect(results[0].personID).to.eq(testUser.personID);
+    expect(results[0]?.personID).to.eq(testUser.personID);
   });
 
   it("Search - Case insensitive uppercase", async () => {
@@ -87,24 +88,33 @@ describe.skip(`Search & Query tests on the ${serviceName} service `,async () => 
     expect(results[0].displayName == "Thomas Sebat").to.be.true
   });
 
+  it("Search with filter", async() => {
+    const results = await service.find({query: { $search: 'daly', gender: "Male"}})
+    expect(results.length).to.eq(3)
+    expect(results[0].displayName).to.eq("Philly Daly")
+    expect(results[1].displayName).to.eq("Ozzie Daly")
+    expect(results[2].displayName).to.eq("Freek Daly")
+  })
+
   it("Search - country and church filter simultaneously", async () => {
-    const results = await service.find({ query: {
-                                                  churchID: {
-                                                    $in: [
-                                                      69
-                                                    ]
-                                                  },
-                                                  currentAddress: {
-                                                    country: {
-                                                      _id: {
-                                                        $in: [
-                                                          'country/178963757'
-                                                        ]
-                                                      }
-                                                    }
-                                                  }
-                                                }
-                                              });
+    const results = await service.find({ 
+      query: {
+        churchID: {
+          $in: [
+            69
+          ]
+        },
+        currentAddress: {
+          country: {
+            _id: {
+              $in: [
+                'country/53'
+              ]
+            }
+          }
+        }
+      }
+    });
     expect(results.length > 0).to.be.true
   });
 });

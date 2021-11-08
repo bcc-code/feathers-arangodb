@@ -25,5 +25,6 @@ arangorestore \
   --server.password "$PASSWORD" \
   --server.authentication true \
   --server.endpoint "$URL" \
+  --include-system-collections true \
   --input-directory "$DIR/../test_data" \
   --create-database true

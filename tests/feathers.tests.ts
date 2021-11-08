@@ -546,7 +546,6 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
           },
         }
         const result = <any[]>await service.find(params)
-        console.log(result)
         expect(result.length).to.eq(1)
         expect(result[0].age).to.eq(25)
       })
@@ -571,7 +570,6 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
           },
         }
         const result = <any[]>await service.find(params)
-        console.log(result)
         expect(result.length).to.eq(1)
         expect(result[0].name).to.eq("Bob")
       })

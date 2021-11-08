@@ -43,38 +43,10 @@ describe(`Aql injection prevention tests `, () => {
 
   });
 
-  it("AQL injection on find with select is detected and not let through", async () => {
-    let maliciousQueryResults = {};
-    try {
-        maliciousQueryResults = await service.find({ query: { $select: ["_id", 'profileVisibility\":0,\"church\":doc}//']},});
-    } catch (error) {
-        expect(error.name === "ArangoError")
-        expect(error.code === 400)
-        return;
-    }
-    assert.fail("Malicious query should result in ArangoError")
-  });
-
-  it("AQL injection on find with sort is detected and not let through", async () => {
-    const results = await service.find( { query: {$sort:{'profileVisibility RETURN { \"church\": doc, \"profileVisibility\": 0 }//':1}}} );
-    expect(results[0]).to.not.have.property('profileVisibility')
-  });
-
-  it("AQL injection on find with filter is detected and not let through", async () => {
+  it("AQL injection on find with filter is parameterized and treated as any other query", async () => {
     const results = await service.find( { query: {"displayName != @value1 RETURN { church: doc, _key: \'178495328\' }//":"!"}} );
     expect(results).to.be.an('array')
     expect(results.length).to.be.equal(0)
-  });
-
-  it("AQL injection on find with filter is detected and not let through, example 2", async () => {
-    try {
-        const results = await service.find({query: {"_key=='178495328'/**/LET/**/activeRole='Developer'/**/UPDATE/**/doc/**/WITH/**/{activeRole}/**/IN/**/person/**/LET/**/asd=1":{"$not":" "},"$limit":-1,"$skip":0} });
-    } catch (error) {
-        expect(error.name === "ArangoError")
-        expect(error.code === 400)
-        return;
-    }
-    assert.fail("Malicious query should result in ArangoError")
   });
 
   it("AQL injection of REMOVE is detected and not let through", async () => {
@@ -87,29 +59,24 @@ describe(`Aql injection prevention tests `, () => {
   });
 
   it("AQL injection on get with filter is detected and not let through", async () => {
-    const results = await service.get("178495328", {query: {"profileVisibility != @value1 RETURN { data: doc, _key: @value2 }//":1}} );
-    expect(results).to.not.be.an('array')
-  });
-
-  it("AQL injection on get with filter is detected and not let through, example 2", async () => {
-    const results = await service.get("178495328", {query: {"@value2 RETURN doc//":{"$nin":[""]}}} );
-    expect(results).to.not.be.an('array')
+    try {
+      const results = await service.get("44722", {query: {"@value2 RETURN doc//":{"$nin":[""]}}} );
+      assert.fail("Query shouldn't find any records")
+    } catch (err) {
+      expect(err.message.includes('No record found for id'))
+    }
   });
 
   it("AQL injection on get with filter is detected and not let through, example 3", async () => {
-    const results = await service.get("178495328", {query: {"@value2 RETURN doc//":{"$nin":[""]}}} );
+    const results = await service.get("44722", {query: {"@value2 RETURN doc//":{"$nin":[""]}}} );
     expect(results).to.not.be.an('array')
   });
 
   it("Aql injection on search is detected and not let through", async () => {
-    try {
-      const results = await service.find({query: {"$search":"\'\'\')) OR doc.a != 1 LIMIT 0,1 UPDATE { _key: \'178509735\', activeRole: \'Developer\' } IN person RETURN {}//\'"}});
-    } catch (error) {
-      expect(error.name === "ArangoError")
-      expect(error.code === 400)
-      return;
-    }
-    assert.fail("Malicious query should result in ArangoError")
+    const results = await service.find({query: {"$search":"\'\'\')) OR doc.a != 1 LIMIT 0,1 UPDATE { _key: \'178509735\', activeRole: \'Developer\' } IN person RETURN {}//\'"}});
+      
+    expect(results).to.be.an('array')
+    expect(results.length).to.be.equal(0)
   })
 
   it('Aql injection on create authentication', async () => {

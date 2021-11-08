@@ -3,32 +3,26 @@
   import _find from "lodash/find";
 
   import { aql } from "arangojs";
-  import { AqlLiteral } from "arangojs/aql";
-  import sanitizeFieldName from "./sanitizeQuery";
+  import { AqlLiteral, AqlQuery } from "arangojs/aql";
 
-  function addSearch(query: any, docName: string = "doc",collection:string = "person"):AqlLiteral {
+  function addSearch(query: string, docName: string = "doc",collection:string = "person"):AqlQuery | undefined{
 
-    const queryNumber = parseInt(query) || 0
-    query =  sanitizeFieldName(query, false);
-
-    let searchQuery:AqlLiteral = aql.literal(`No query defined`)
+    let searchQuery: AqlQuery | undefined = undefined;
     switch(collection) {
       case 'person':
-        searchQuery = aql.literal(personSearch(docName,query))
+        searchQuery = personSearch(docName,query)
         break;
       case 'country':
-      searchQuery = aql.literal(`${generateFuzzyStatement(
+      searchQuery = generateFuzzyStatement(
             [{name:'nameEn', analyzer:'bcc_text',type:'string'},
             {name:'nameNo', analyzer:'bcc_text',type:'string'}],
             query,
             docName,
-            )}
-        `);
+            )
         break;
       case 'org':
       case 'application':
-        searchQuery = aql.literal(`${generateFuzzyStatement([{name:'name', analyzer:'bcc_text',type:'string'}],query,docName)}
-        `);
+        searchQuery = generateFuzzyStatement([{name:'name', analyzer:'bcc_text',type:'string'}],query,docName);
         break;
       default:
         console.error('A search has been attempted on a collection where no search logic has been defined')
@@ -38,49 +32,50 @@
     return searchQuery
   }
 
-  const personSearch = (doc: string,query:string) => {
+  const personSearch = (doc: string,query:string): AqlQuery => {
     const fuzzySearchFields: any[] = [
       { name: 'displayName',analyzer:'bcc_text',type:'string' },
       { name: 'email', analyzer:'identity',type:'string' },
       { name: 'personID',analyzer:'identity',type:'number' }
     ];
-    return generateFuzzyStatement(fuzzySearchFields,query, doc)
+    return generateFuzzyStatement(fuzzySearchFields, query, doc)
 
   }
   type searchQueryType = "number" | "exact" | 'fuzzy'
   type searchOrFilter = 'SEARCH' |'FILTER'
   type modifiedQueryType = {type:searchQueryType,query:any,searchOrFilter:searchOrFilter}
-  function generateFuzzyStatement(fields:any, query:any,doc:string){
+  function generateFuzzyStatement(fields:any, query:string ,doc:string): AqlQuery{
     const modifiedQuery:modifiedQueryType = determineQueryType(query)
     let numberField:any;
     let stringFields:any;
 
-    let searchStatements = []
+    let searchStatements:AqlQuery[] = []
     switch (modifiedQuery.type) {
       case "number":
         numberField = _find(fields,['type','number'])
-        searchStatements.push(`${doc}.${numberField.name} == ${modifiedQuery.query}`)
+        searchStatements.push(aql`doc[${numberField.name}] == ${modifiedQuery.query}`)
         break;
       case "fuzzy":
         stringFields = _filter(fields,['type','string'])
         for (const field of stringFields) {
-          searchStatements.push(`ANALYZER(${doc}.${field.name} IN TOKENS('${modifiedQuery.query}','${field.analyzer}'),'${field.analyzer}')`)
+          searchStatements.push(aql`ANALYZER(doc[${field.name}] IN TOKENS(${modifiedQuery.query},${field.analyzer}),${field.analyzer})`)
         }
         break;
       case "exact":
         stringFields = _filter(fields,['type','string'])
         for (const field of stringFields) {
-          searchStatements.push(`CONTAINS(LOWER(${doc}.${field.name}),LOWER('${modifiedQuery.query}'))`)
+          searchStatements.push(aql`CONTAINS(LOWER(doc[${field.name}]),LOWER(${modifiedQuery.query}))`)
         }
         break;
       default:
         throw console.error(`Unable to determine the type of search query, between number,exact or fuzzy, query: ${query}`);
-        break;
     }
-
-    let result = `${modifiedQuery.searchOrFilter} `
-    result += searchStatements.join(' OR ')
-    result += ` SORT BM25(${doc}) desc `
+    const searchConditions = aql.join(searchStatements, ' OR ')
+    let result = aql.join([
+      aql.literal(modifiedQuery.searchOrFilter),
+      searchConditions,
+      aql`SORT BM25(doc) desc`
+    ])
     return result
   }
 
