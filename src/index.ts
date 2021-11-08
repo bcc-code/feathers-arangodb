@@ -343,7 +343,7 @@ export class DbService<T> {
 
     if (paging) {
       return {
-        total: cursor.extra.stats?.fullCount,
+        total: cursor.extra.stats?.scannedFull,
         data: result,
       };
     }
@@ -395,7 +395,8 @@ export class DbService<T> {
     )) as any;
 
     if (!_isEmpty(this._paginate)) {
-
+      console.log(this._paginate)
+      console.log(result)
       return {
         total: result.total,
         // @ts-ignore   Will be defined based on previous logic

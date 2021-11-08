@@ -217,7 +217,7 @@ export class QueryBuilder {
   get limit(): AqlValue {
     if (this._limit === -1 && this._skip === 0) return aql.literal("");
     const realLimit = this._limit > -1 ? this._limit : this.maxLimit;
-    return aql.literal(`LIMIT ${this._skip}, ${realLimit}`);
+    return aql`LIMIT ${this._skip}, ${realLimit}`;
   }
 
   addSort(sort: any, docName: string = "doc") {
@@ -227,7 +227,7 @@ export class QueryBuilder {
           return aql.join([
             this.getParameterizedPath(key, docName), 
             aql.literal(parseInt(sort[key]) === -1 ? "DESC" : "")
-          ], '');
+          ], ' ');
         }),
         ", "
       );

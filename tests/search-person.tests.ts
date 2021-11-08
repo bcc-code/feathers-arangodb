@@ -89,6 +89,14 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
     expect(results[0].displayName == "Thomas Sebat").to.be.true
   });
 
+  it("Search with filter", async() => {
+    const results = await service.find({query: { $search: 'daly', gender: "Male"}})
+    expect(results.length).to.eq(3)
+    expect(results[0].displayName).to.eq("Philly Daly")
+    expect(results[1].displayName).to.eq("Ozzie Daly")
+    expect(results[2].displayName).to.eq("Freek Daly")
+  })
+
   it("Search - country and church filter simultaneously", async () => {
     const results = await service.find({ 
       query: {
