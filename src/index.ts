@@ -395,8 +395,6 @@ export class DbService<T> {
     )) as any;
 
     if (!_isEmpty(this._paginate)) {
-      console.log(this._paginate)
-      console.log(result)
       return {
         total: result.total,
         // @ts-ignore   Will be defined based on previous logic

@@ -34,7 +34,6 @@ describe(`Search tests on the ${serviceName} service `, () => {
 
   it("Search - country", async () => {
     const results = await service.find({ query: { $search: 'norway' } });
-    console.log(results)
     expect(results[0]._id).to.eq("country/53");
   });
 

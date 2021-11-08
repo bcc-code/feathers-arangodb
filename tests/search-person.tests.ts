@@ -49,7 +49,6 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
 
   it("Search - Full name no error", async () => {
     const results = await service.find({ query: { $search: testUser.displayName } });
-    console.log(results)
     expect(results[0]?.personID).to.eq(testUser.personID);
   });
 
