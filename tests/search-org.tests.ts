@@ -34,8 +34,8 @@ describe.skip(`Search tests on the ${serviceName} service `, () => {
   });
 
   it("Search - org", async () => {
-    const results = await service.find({ query: { $search: 'Oslo' } });
-    expect(results[0]._id).to.eq("org/178376299");
+    const results = await service.find({ query: { $search: 'Oslo' }, $select: ['name'] });
+    expect(results[0]._id).to.eq("org/69");
   });
 
 });

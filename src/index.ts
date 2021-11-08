@@ -332,11 +332,7 @@ export class DbService<T> {
           }
         })
     );
-
-    // const mapped = await cursor.map((item) => item)
-    // console.log(mapped)
     const unfiltered: T[] = await cursor.map((item) => item);
-    console.log('unfiltered', unfiltered)
     const result = unfiltered.filter((item) => item != null);
 
     if (
