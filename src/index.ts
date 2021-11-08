@@ -317,7 +317,7 @@ export class DbService<T> {
   ) {
     const cursor: ArrayCursor<T> = <ArrayCursor>(
       await database
-        .query(query)
+        .query(query, {fullCount: true})
         .catch((error) => {
           if (
             error &&
@@ -331,7 +331,7 @@ export class DbService<T> {
           }
         })
     );
-    const unfiltered: T[] = await cursor.map((item) => item);
+    const unfiltered: T[] = await cursor.map((item) => this.fixKeyReturn(item));
     const result = unfiltered.filter((item) => item != null);
 
     if (
@@ -343,7 +343,7 @@ export class DbService<T> {
 
     if (paging) {
       return {
-        total: cursor.extra.stats?.scannedFull,
+        total: cursor.extra.stats?.fullCount,
         data: result,
       };
     }
