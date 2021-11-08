@@ -317,7 +317,7 @@ export class DbService<T> {
   ) {
     const cursor: ArrayCursor<T> = <ArrayCursor>(
       await database
-        .query(query, {fullCount: true})
+        .query(query, {fullCount: paging})
         .catch((error) => {
           if (
             error &&
