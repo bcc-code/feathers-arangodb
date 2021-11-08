@@ -614,6 +614,15 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result.limit).to.eq(2);
         expect(result.skip).to.eq(0);
       });
+
+      it('total works with filter', async () => {
+        const params = { query: { $sort: {name: 1}, $limit: 1, age: {$gt: 20} } };
+        const result = <any>await service.find(params);
+        expect(result.total).to.eq(2);
+        expect(result.limit).to.eq(1);
+        expect(result.skip).to.eq(0);
+        expect(result.data[0].name).to.eq('Bob');
+      });
     });
   });
 
