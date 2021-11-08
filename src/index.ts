@@ -331,7 +331,7 @@ export class DbService<T> {
           }
         })
     );
-    const unfiltered: T[] = await cursor.map((item) => this.fixKeyReturn(item));
+    const unfiltered: T[] = await cursor.map((item) => item);
     const result = unfiltered.filter((item) => item != null);
 
     if (
