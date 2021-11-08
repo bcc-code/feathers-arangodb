@@ -5,9 +5,8 @@ import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
 
 const serviceName = "org";
-let testUserWithARole: any = null;
 
-describe.skip(`Search tests on the ${serviceName} service `, () => {
+describe(`Search tests on the ${serviceName} service `, () => {
   let app: Application<any>;
   let service: IArangoDbService<any>;
 
@@ -29,8 +28,7 @@ describe.skip(`Search tests on the ${serviceName} service `, () => {
       })
     );
     service = <IArangoDbService<any>>app.service(serviceName);
-    //testUserWithARole = await service.get('178509735', {});
-
+    await new Promise((res) => setTimeout(res, 1000))
   });
 
   it("Search - org", async () => {

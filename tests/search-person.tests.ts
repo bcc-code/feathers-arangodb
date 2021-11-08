@@ -32,13 +32,13 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
     );
     service = <IArangoDbService<any>>app.service(serviceName);
     testUser = await service.get('53182', {});
-    // specialCharactersUser = await service.get('42352', {});
-    // userWithMiddleName = await service.get('13629', {});
+    specialCharactersUser = await service.get('42352', {});
+    userWithMiddleName = await service.get('13629', {});
+    await new Promise((res) => setTimeout(res, 1000))
   });
 
-  it.only("Search - PersonID", async () => {
+  it("Search - PersonID", async () => {
     const results = await service.find({ query: { $search: 'Cloia Jerrits' } });
-    console.log(results)
     expect(results[0].personID).to.eq(testUser.personID);
   });
 
@@ -90,23 +90,24 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
   });
 
   it("Search - country and church filter simultaneously", async () => {
-    const results = await service.find({ query: {
-                                                  churchID: {
-                                                    $in: [
-                                                      69
-                                                    ]
-                                                  },
-                                                  currentAddress: {
-                                                    country: {
-                                                      _id: {
-                                                        $in: [
-                                                          'country/178963757'
-                                                        ]
-                                                      }
-                                                    }
-                                                  }
-                                                }
-                                              });
+    const results = await service.find({ 
+      query: {
+        churchID: {
+          $in: [
+            69
+          ]
+        },
+        currentAddress: {
+          country: {
+            _id: {
+              $in: [
+                'country/53'
+              ]
+            }
+          }
+        }
+      }
+    });
     expect(results.length > 0).to.be.true
   });
 });

@@ -292,7 +292,6 @@ export class DbService<T> {
   }
 
   public fixKeyReturn(item: any): any {
-    console.log(item)
     const idObj: any = {};
 
     if (typeof item == "object" && item != null) {
@@ -384,7 +383,6 @@ export class DbService<T> {
       " "
     );
 
-    console.log(query)
 
     console.log("DEBUG - aql:", query.query);
     console.log("DEBUG - variables:",query.bindVars)
@@ -395,10 +393,6 @@ export class DbService<T> {
       false,
       !_isEmpty(this._paginate)
     )) as any;
-
-    console.log(result)
-
-
 
     if (!_isEmpty(this._paginate)) {
 
