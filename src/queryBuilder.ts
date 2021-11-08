@@ -54,22 +54,20 @@ export class QueryBuilder {
   constructor(
     params: Params,
     collectionName: string = "",
-    docName: string = "doc",
-    returnDocName: string = "doc"
   ) {
     this._collection = collectionName;
-    this.create(params, docName, returnDocName);
+    this.create(params);
   }
 
-  getParameterizedPath(path: string, docName:string = 'doc'): GeneratedAqlQuery {
+  getParameterizedPath(path: string): GeneratedAqlQuery {
     const pathArray = path.split('.').map((field:string) => aql`[${field}]`)
     return aql.join([
-      aql.literal(docName),
+      aql`doc`,
       ...pathArray
     ], '')
   }
 
-  projectRecursive(o: object, docName: string): AqlValue {
+  projectRecursive(o: object): AqlValue {
     const result = Object.keys(o).map((field: string, ind: number) => {
       const v: any = _get(o, field);
       return aql.join(
@@ -78,10 +76,10 @@ export class QueryBuilder {
           _isObject(v)
             ? aql.join([
               aql.literal("{"),
-              this.projectRecursive(v, docName),
+              this.projectRecursive(v),
               aql.literal("}"),
             ])
-            : this.getParameterizedPath(v, docName),
+            : this.getParameterizedPath(v),
         ],
         " "
       );
@@ -90,11 +88,11 @@ export class QueryBuilder {
     return aql.join(result, ", ");
   }
 
-  selectBuilder(params: Params, docName: string = "doc"): AqlQuery | AqlLiteral {
+  selectBuilder(params: Params): AqlQuery {
     const select:string[] | undefined = params.query?.$select
 
     if(!select?.length)
-      return aql.literal(`RETURN ${docName}`);
+      return aql`RETURN doc`;
 
     const ret = { };
     select.forEach((fieldName: string) => {
@@ -104,7 +102,7 @@ export class QueryBuilder {
     return aql.join(
       [
         aql`RETURN {`,
-        this.projectRecursive(ret, docName),
+        this.projectRecursive(ret),
         aql`}`,
       ],
       " "
@@ -113,20 +111,16 @@ export class QueryBuilder {
 
   create(
     params: Params,
-    docName: string = "doc",
-    returnDocName: string = "doc"
   ): QueryBuilder {
-    this.returnFilter = this.selectBuilder(params, returnDocName);
+    this.returnFilter = this.selectBuilder(params);
     const query = _get(params, "query", null);
-    console.log(`Query from client: ${JSON.stringify(query)}, docName:${docName}, returnDocName:${returnDocName}`)
-    this._runCheck(query, docName, returnDocName);
+    console.log(`Query from client: ${JSON.stringify(query)}, docName:doc, returnDocName:doc`)
+    this._runCheck(query);
     return this;
   }
 
   _runCheck(
     query: any,
-    docName: string = "doc",
-    returnDocName: string = "doc",
   ) {
     if (!query || _isEmpty(query)) return this;
     const queryParamaters = Object.keys(query)
@@ -144,14 +138,14 @@ export class QueryBuilder {
           this._skip = parseInt(value);
           break;
         case "$sort":
-          this.addSort(value, docName);
+          this.addSort(value);
           break;
         case "$search":
-          this.search = addSearch(value, docName, this._collection);
+          this.search = addSearch(value, this._collection);
           break;
       }
     });
-    this.filter = this._aqlFilterFromFeathersQuery(query, aql.literal(docName))
+    this.filter = this._aqlFilterFromFeathersQuery(query, aql`doc`)
   }
 
   _aqlFilterFromFeathersQuery(
@@ -220,12 +214,12 @@ export class QueryBuilder {
     return aql`LIMIT ${this._skip}, ${realLimit}`;
   }
 
-  addSort(sort: any, docName: string = "doc") {
+  addSort(sort: any) {
     if (Object.keys(sort).length > 0) {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.join([
-            this.getParameterizedPath(key, docName), 
+            this.getParameterizedPath(key), 
             aql.literal(parseInt(sort[key]) === -1 ? "DESC" : "")
           ], ' ');
         }),

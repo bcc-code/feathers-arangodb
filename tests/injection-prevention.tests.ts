@@ -5,7 +5,6 @@ import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
 
 const serviceName = "person";
-let testUserWithARole: any = null;
 
 /* Aql injection works by adding comment characters to 'turn-off' return statement that QueryBuilder produces
 and by supplying own version of return by using string termination techniques.

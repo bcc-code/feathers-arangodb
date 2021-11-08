@@ -5,24 +5,23 @@
   import { aql } from "arangojs";
   import { AqlLiteral, AqlQuery } from "arangojs/aql";
 
-  function addSearch(query: string, docName: string = "doc",collection:string = "person"):AqlQuery | undefined{
+  function addSearch(query: string,collection:string = "person"):AqlQuery | undefined{
 
     let searchQuery: AqlQuery | undefined = undefined;
     switch(collection) {
       case 'person':
-        searchQuery = personSearch(docName,query)
+        searchQuery = personSearch(query)
         break;
       case 'country':
       searchQuery = generateFuzzyStatement(
             [{name:'nameEn', analyzer:'bcc_text',type:'string'},
             {name:'nameNo', analyzer:'bcc_text',type:'string'}],
             query,
-            docName,
             )
         break;
       case 'org':
       case 'application':
-        searchQuery = generateFuzzyStatement([{name:'name', analyzer:'bcc_text',type:'string'}],query,docName);
+        searchQuery = generateFuzzyStatement([{name:'name', analyzer:'bcc_text',type:'string'}],query);
         break;
       default:
         console.error('A search has been attempted on a collection where no search logic has been defined')
@@ -32,19 +31,19 @@
     return searchQuery
   }
 
-  const personSearch = (doc: string,query:string): AqlQuery => {
+  const personSearch = (query:string): AqlQuery => {
     const fuzzySearchFields: any[] = [
       { name: 'displayName',analyzer:'bcc_text',type:'string' },
       { name: 'email', analyzer:'identity',type:'string' },
       { name: 'personID',analyzer:'identity',type:'number' }
     ];
-    return generateFuzzyStatement(fuzzySearchFields, query, doc)
+    return generateFuzzyStatement(fuzzySearchFields, query)
 
   }
   type searchQueryType = "number" | "exact" | 'fuzzy'
   type searchOrFilter = 'SEARCH' |'FILTER'
   type modifiedQueryType = {type:searchQueryType,query:any,searchOrFilter:searchOrFilter}
-  function generateFuzzyStatement(fields:any, query:string ,doc:string): AqlQuery{
+  function generateFuzzyStatement(fields:any, query:string): AqlQuery{
     const modifiedQuery:modifiedQueryType = determineQueryType(query)
     let numberField:any;
     let stringFields:any;
