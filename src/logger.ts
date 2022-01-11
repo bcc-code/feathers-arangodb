@@ -26,5 +26,5 @@ const logger = createLogger({
     transports: isLocalEnvironment ? [new transports.Console()] : [loggingWinston],
 });
 
-logger.debug('Feathers-Arangodb adapter logger initialized', {isLocal: isLocalEnvironment, projectId, serviceName});
+logger.debug('Feathers-Arangodb adapter logger initialized', {isLocal: isLocalEnvironment, projectId, serviceName, gcp: process.env.GCP_PROJECT});
 export default logger;
