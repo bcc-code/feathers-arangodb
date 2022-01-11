@@ -119,7 +119,7 @@ export class QueryBuilder {
   ): QueryBuilder {
     this.returnFilter = this.selectBuilder(params, returnDocName);
     const query = _get(params, "query", null);
-    logger.debug("Query from client:", {query: query, docName: docName, returnDocName: returnDocName})
+    logger.debug("Query object received from client:", {query: query, docName: docName, returnDocName: returnDocName})
     this._runCheck(query, docName, returnDocName);
     return this;
   }
