@@ -69,7 +69,7 @@
         }
         break;
       default:
-        throw logger.error(`Unable to determine the type of search query, between number,exact or fuzzy, query: ${query}`);
+        throw logger.error(`Unable to determine the type of search query between number,exact or fuzzy.`, {query: query});
     }
     const searchConditions = aql.join(searchStatements, ' OR ')
     let result = aql.join([
