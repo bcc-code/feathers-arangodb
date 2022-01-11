@@ -11,6 +11,7 @@ import { aql } from "arangojs";
 import { AqlQuery, AqlValue, GeneratedAqlQuery } from "arangojs/aql";
 import { AqlLiteral } from "arangojs/aql";
 import { addSearch } from "./searchBuilder"
+import logger from "./logger";
 
 export enum LogicalOperator {
   And = " AND ",
@@ -118,7 +119,7 @@ export class QueryBuilder {
   ): QueryBuilder {
     this.returnFilter = this.selectBuilder(params, returnDocName);
     const query = _get(params, "query", null);
-    console.log(`Query from client: ${JSON.stringify(query)}, docName:${docName}, returnDocName:${returnDocName}`)
+    logger.debug("Query from client:", {query: query, docName: docName, returnDocName: returnDocName})
     this._runCheck(query, docName, returnDocName);
     return this;
   }
@@ -208,7 +209,7 @@ export class QueryBuilder {
 
     if(!filtered.length) return undefined
 
-    const combined = aql.join(filtered, operator) 
+    const combined = aql.join(filtered, operator)
     if(operator === LogicalOperator.And)
       return combined
     return aql`(${combined})`
@@ -225,7 +226,7 @@ export class QueryBuilder {
       this.sort = aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.join([
-            this.getParameterizedPath(key, docName), 
+            this.getParameterizedPath(key, docName),
             aql.literal(parseInt(sort[key]) === -1 ? "DESC" : "")
           ], ' ');
         }),
