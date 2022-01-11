@@ -20,6 +20,7 @@ import { LogicalOperator, QueryBuilder } from "./queryBuilder";
 import { GraphVertexCollection } from "arangojs/graph";
 import { ArrayCursor } from "arangojs/cursor";
 import { View } from "arangojs/view";
+import logger from "./logger";
 
 export declare type ArangoDbConfig =
   | string
@@ -383,9 +384,8 @@ export class DbService<T> {
       " "
     );
 
+    logger.debug("DEBUG - generated aql:", {query: query.query, bindVars: query.bindVars});
 
-    console.log("DEBUG - aql:", query.query);
-    console.log("DEBUG - variables:",query.bindVars)
     const result = (await this._returnMap(
       database,
       query,

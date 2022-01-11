@@ -4,6 +4,7 @@
 
   import { aql } from "arangojs";
   import { AqlLiteral, AqlQuery } from "arangojs/aql";
+  import logger from "./logger";
 
   function addSearch(query: string, docName: string = "doc",collection:string = "person"):AqlQuery | undefined{
 
@@ -68,7 +69,7 @@
         }
         break;
       default:
-        throw console.error(`Unable to determine the type of search query, between number,exact or fuzzy, query: ${query}`);
+        throw logger.error(`Unable to determine the type of search query, between number,exact or fuzzy, query: ${query}`);
     }
     const searchConditions = aql.join(searchStatements, ' OR ')
     let result = aql.join([

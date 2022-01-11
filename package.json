@@ -1,6 +1,6 @@
 {
   "name": "@bcc-code/feathers-arangodb",
-  "version": "4.0.1",
+  "version": "4.0.2",
   "description": "ArangoDB Service/Adapter for FeathersJS",
   "homepage": "https://github.com/AnatidaeProject/feathers-arangodb",
   "main": "lib/",
@@ -39,9 +39,11 @@
   "dependencies": {
     "@feathersjs/commons": "^4.5.3",
     "@feathersjs/errors": "^4.5.3",
+    "@google-cloud/logging-winston": "^4.1.1",
     "arangojs": "^7.0.1",
     "lodash": "^4.17.15",
-    "uberproto": "^2.0.6"
+    "uberproto": "^2.0.6",
+    "winston": "^3.3.4"
   },
   "devDependencies": {
     "@feathersjs/feathers": "^4.5.3",

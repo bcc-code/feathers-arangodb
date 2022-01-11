@@ -28,7 +28,7 @@ const importDB = async (): Promise<void> => {
       assert.fail('The import of test data failed with Error: ',cause);
     })
   .then( ({stdout}) => {
-    console.log('Test data was importet in the fresh database: ',stdout);
+    console.log('Test data was imported in the fresh database: ',stdout);
   });
  }
 
