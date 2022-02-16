@@ -3,7 +3,7 @@ import { Application, Service } from 'feathersjs__feathers';
 import { NotFound } from '@feathersjs/errors';
 import ArangoDbService, { IArangoDbService, AUTH_TYPES } from '../src';
 import { AutoDatabse } from '../src/auto-database';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 
 const serviceName = 'people';
 const idProp = '_key';
@@ -329,16 +329,53 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
     })
     describe('array functions', () => {
       beforeEach(async () => {
-        const mike = await service.create({ name: 'Mike', age: 0, friends: ['Alice', 'Bob']});
+        const mike = await service.create({ name: 'Mike', age: 0, friends: [{name: 'Alice'}, {name: 'Bob'}], parents: [{name: 'Freek'}]});
         _ids.mike = mike[idProp];
 
-        const jake = await service.create({ name: 'Jake', age: 0, friends: ['Doug']});
+        const jake = await service.create({ name: 'Jake', age: 0, friends: [{ name: 'Doug'}], parents: [{name: 'Anne'}]});
         _ids.jake = jake[idProp];
       });
       afterEach(async () => {
         await service.remove(_ids.mike).catch(() => {});
         await service.remove(_ids.jake).catch(() => {});
       })
+
+      it('can $elemMatch', async () => {
+        const params = {
+          query: { friends: { $elemMatch: { name: {$in: ['Alice']}}}}
+        };
+        const result = <any[]>await service.find(params);
+        const names = result.map(r => r.name)
+        assert.equal(names.length,1)
+        assert.include(names,'Mike')
+      });
+
+      it('can $elemMatch for multiple', async () => {
+        const params = {
+          query: { friends: { $elemMatch: { name: {$in: ['Bob','Doug']}}}}
+        };
+        const result = <any[]>await service.find(params);
+        console.log('Result',result)
+        expect(result.length).to.eq(2);
+        const names = result.map(r => r.name)
+        assert.include(names,'Mike')
+        assert.include(names,'Jake')
+      });
+
+      it('can $elemMatch with $or', async () => {
+        const params = {
+          query: { $or: [
+            {friends: { $elemMatch: { name: {$in: ['Doug']} }}},
+            {parents: { $elemMatch: { name: {$in: ['Freek']} }}}
+          ]
+        }
+        };
+        const result = <any[]>await service.find(params);
+        expect(result.length).to.eq(2);
+        const names = result.map(r => r.name)
+        assert.include(names,'Mike')
+        assert.include(names,'Jake')
+      });
 
       it('can $size equal to value', async () => {
         const params = {
@@ -504,6 +541,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result[0].name).to.eq('Alice');
         expect(result[1].name).to.eq('Doug');
       });
+
 
       it('can $gt and $lt and $sort', async () => {
         const params = {

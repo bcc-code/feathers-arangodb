@@ -37,6 +37,7 @@ export class QueryBuilder {
     "$aql",
     "$resolve",
     "$search",
+    "$elemMatch",
   ];
   bindVars: { [key: string]: any } = { };
   maxLimit = 1000000000; // A billion records...
@@ -174,6 +175,7 @@ export class QueryBuilder {
         case "$lte": operator = " >= "; break;
         case "$gt": operator = " < "; break;
         case "$gte": operator = " <= "; break;
+        case "$elemMatch": aqlFilters.push(this._aqlFilterArrayElement(value, aqlFilterVar)); continue;
         case "$or": aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.Or)); continue;
         case "$and": aqlFilters.push(this._aqlFilterFromFeathersQueryArray(value, aqlFilterVar, LogicalOperator.And)); continue;
         case "$size": aqlFilters.push(this._aqlFilterFromFeathersQuery(value, aql`LENGTH(${aqlFilterVar})`)); continue;
@@ -190,6 +192,14 @@ export class QueryBuilder {
       }
     }
     return this._joinAqlFiltersWithOperator(aqlFilters, LogicalOperator.And)
+  }
+
+  _aqlFilterArrayElement(
+    elementQuery: any,
+    aqlFilterVar: AqlQuery | AqlLiteral,
+  ): AqlQuery | undefined {
+    const elementFilter = aql`FILTER ${this._aqlFilterFromFeathersQuery(elementQuery, aql`CURRENT`)}`
+    return aql`LENGTH(${aqlFilterVar}[* ${elementFilter} RETURN CURRENT])`;
   }
 
   _aqlFilterFromFeathersQueryArray(
