@@ -329,10 +329,10 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
     })
     describe('array functions', () => {
       beforeEach(async () => {
-        const mike = await service.create({ name: 'Mike', age: 0, friends: ['Alice', 'Bob']});
+        const mike = await service.create({ name: 'Mike', age: 0, friends: [{name: 'Alice'}, {name: 'Bob'}], parents: [{name: 'Freek'}]});
         _ids.mike = mike[idProp];
 
-        const jake = await service.create({ name: 'Jake', age: 0, friends: ['Doug']});
+        const jake = await service.create({ name: 'Jake', age: 0, friends: [{ name: 'Doug'}], parents: [{name: 'Anne'}]});
         _ids.jake = jake[idProp];
       });
       afterEach(async () => {
@@ -358,7 +358,7 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result[1].name).to.eq('Jake')
       })
     })
-    describe('special filters', () => {
+    describe.only('special filters', () => {
 
       it('can $sort', async () => {
         const params = {
@@ -503,6 +503,39 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
         expect(result.length).to.eq(2);
         expect(result[0].name).to.eq('Alice');
         expect(result[1].name).to.eq('Doug');
+      });
+
+      it('can $elemMatch', async () => {
+        const params = {
+          query: { friends: { $elemMatch: { $in: ['Alice']} } }
+        };
+        const result = <any[]>await service.find(params);
+        expect(result.length).to.eq(1);
+        expect(result[0].name).to.eq('Mike');
+      });
+
+      it('can $elemMatch for multiple', async () => {
+        const params = {
+          query: { friends: { $elemMatch: { $in: ['Bob','Doug']} } }
+        };
+        const result = <any[]>await service.find(params);
+        expect(result.length).to.eq(2);
+        expect(result[0].name).to.eq('Mike');
+        expect(result[0].name).to.eq('Jake');
+      });
+
+      it('can $elemMatch with $or', async () => {
+        const params = {
+          query: { $or: [
+            {friends: { $elemMatch: { $in: ['Doug']} } },
+            {parents: { $elemMatch: { $in: ['Freek']} } }
+          ]
+        }
+        };
+        const result = <any[]>await service.find(params);
+        expect(result.length).to.eq(2);
+        expect(result[0].name).to.eq('Mike');
+        expect(result[0].name).to.eq('Jake');
       });
 
       it('can $gt and $lt and $sort', async () => {
