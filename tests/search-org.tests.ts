@@ -31,8 +31,13 @@ describe(`Search tests on the ${serviceName} service `, () => {
     await new Promise((res) => setTimeout(res, 1000))
   });
 
-  it("Search - org", async () => {
+  it("Search - org by name", async () => {
     const results = await service.find({ query: { $search: 'Oslo' }, $select: ['name'] });
+    expect(results[0]._id).to.eq("org/69");
+  });
+
+  it("Search - org by ID", async () => {
+    const results = await service.find({ query: { $search: '69' }, $select: ['name'] });
     expect(results[0]._id).to.eq("org/69");
   });
 

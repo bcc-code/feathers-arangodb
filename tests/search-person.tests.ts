@@ -1,9 +1,10 @@
 import 'mocha'
 import feathers from "@feathersjs/feathers";
 import { Application } from "@feathersjs/feathers";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
+import { checkError } from './utils';
 
 const serviceName = "person";
 let testUser: any = null;
@@ -36,6 +37,26 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
     userWithMiddleName = await service.get('13629', {});
     await new Promise((res) => setTimeout(res, 1000))
   });
+
+  it("Search - invalid input => null", async () => {
+    try {
+      const results = await service.find({ query: { $search: null} });
+      assert.fail("Invalid input should result in error");
+    } catch (err: unknown) {
+      checkError(err, 'Invalid query type');
+    }
+  });
+
+  it("Search - invalid input => object", async () => {
+    try {
+
+      const results = await service.find({ query: { $search: {displayName: "Cloia Jerrits"}} });
+      assert.fail("Invalid input should result in error");
+    } catch (err: unknown) {
+      checkError(err, 'Invalid query type');
+    }
+  });
+
 
   it("Search - PersonID", async () => {
     const results = await service.find({ query: { $search: 'Cloia Jerrits' } });
@@ -118,3 +139,4 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
     expect(results.length > 0).to.be.true
   });
 });
+
