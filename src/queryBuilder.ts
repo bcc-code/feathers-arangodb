@@ -1,8 +1,5 @@
-import _isNumber from "lodash/isNumber";
-import _isBoolean from "lodash/isBoolean";
 import _isObject from "lodash/isObject";
 import _isString from "lodash/isString";
-import _omit from "lodash/omit";
 import _get from "lodash/get";
 import _set from "lodash/set";
 import _isEmpty from "lodash/isEmpty";
@@ -120,7 +117,7 @@ export class QueryBuilder {
   ): QueryBuilder {
     this.returnFilter = this.selectBuilder(params, returnDocName);
     const query = _get(params, "query", null);
-    logger.debug("Query object received from client:", {query: query, docName: docName, returnDocName: returnDocName})
+    logger.debug("Query object received from client:", {query: query, docName: docName, returnDocName: returnDocName, collection: this._collection})
     this._runCheck(query, docName, returnDocName);
     return this;
   }

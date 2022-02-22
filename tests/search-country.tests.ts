@@ -32,9 +32,15 @@ describe(`Search tests on the ${serviceName} service `, () => {
 
   });
 
-  it("Search - country", async () => {
+  it("Search - country by name", async () => {
     const results = await service.find({ query: { $search: 'norway' } });
     expect(results[0]._id).to.eq("country/53");
   });
+
+  it("Search - country by id", async () => {
+    const results = await service.find({ query: { $search: '53' } });
+    expect(results[0]._id).to.eq("country/53");
+  });
+
 
 });
