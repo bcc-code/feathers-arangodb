@@ -75,15 +75,17 @@ function generateFuzzyStatement(fields:FuzzySearchField[], query:unknown ,doc:st
   const searchStatements:AqlQuery[] = [];
   switch (modifiedQuery.type) {
     case "number":
-      if(!numberField) break;
+      if(!numberField) throw new BadRequest('Cannot search by number for this collection');
       searchStatements.push(aql`doc[${numberField.name}] == ${modifiedQuery.query}`);
       break;
     case "fuzzy":
+      if(!stringFields.length) throw new BadRequest('Cannot search by string for this collection');
       for (const field of stringFields) {
         searchStatements.push(aql`ANALYZER(doc[${field.name}] IN TOKENS(${modifiedQuery.query},${field.analyzer}),${field.analyzer})`);
       }
       break;
     case "exact":
+      if(!stringFields.length) throw new BadRequest('Cannot search by string for this collection');
       for (const field of stringFields) {
         searchStatements.push(aql`CONTAINS(LOWER(doc[${field.name}]),LOWER(${modifiedQuery.query}))`);
       }

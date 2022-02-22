@@ -1,8 +1,9 @@
 import feathers from "@feathersjs/feathers";
 import { Application } from "@feathersjs/feathers";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
+import { checkError } from "./utils";
 
 describe(`Search tests on the application service `, () => {
   let app: Application<any>;
@@ -30,9 +31,19 @@ describe(`Search tests on the application service `, () => {
 
   });
 
-  it("Search - application", async () => {
+  it("Search - application by name", async () => {
     const results = await service.find({ query: { $search: 'Samvirk' } });
     expect(results[0]._id).to.eq("application/522409136");
+  });
+
+  it("Search - application by number -> unsupported", async () => {
+    try {
+      const results = await service.find({ query: { $search: '522409136' } });
+      
+      assert.fail("Invalid input should result in error");
+    } catch (err: unknown) {
+      checkError(err, 'Cannot search by number for this collection');
+    }
   });
 
 });

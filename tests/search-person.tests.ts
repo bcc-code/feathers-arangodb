@@ -4,6 +4,7 @@ import { Application } from "@feathersjs/feathers";
 import { assert, expect } from "chai";
 import ArangoDbService, { IArangoDbService, AUTH_TYPES } from "../src";
 import { importDB } from "./setup-tests/setup";
+import { checkError } from './utils';
 
 const serviceName = "person";
 let testUser: any = null;
@@ -139,7 +140,3 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
   });
 });
 
-const checkError = (error: unknown, expectedMessage: string) => {
-  if(!(error instanceof Error)) throw Error('Invalid Error type');
-  assert.equal(error.message, expectedMessage);
-}
