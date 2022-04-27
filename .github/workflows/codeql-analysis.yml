@@ -12,14 +12,14 @@
 name: "CodeQL Code Scan"
 
 on:
-  workflow_dispatch
+  schedule:
+    - cron: '25 22 10 * *'
+  workflow_dispatch:
 #   push:
 #     branches: [ master ]
 #   pull_request:
 #     # The branches below must be a subset of the branches above
 #     branches: [ master ]
-#   schedule:
-#     - cron: '25 22 * * 1'
 
 jobs:
   analyze:
