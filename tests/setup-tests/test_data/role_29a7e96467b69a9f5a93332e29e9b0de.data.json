@@ -1,18 +1,18 @@
-{"type":2300,"data":{"_key":"176132940","_id":"role/176132940","_rev":"_co7R8nu--M","enumName":"Innmelder","name":"Innmelder","roleID":78754,"scope":"orgLevel","securityLevel":7}}
-{"type":2300,"data":{"_key":"176132945","_id":"role/176132945","_rev":"_co7R8nu--c","enumName":"FinanceManager","name":"Finance Manager","roleID":78758,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132943","_id":"role/176132943","_rev":"_co7R8nu--Y","enumName":"HeadOfCommunications","name":"Head of Communications","roleID":78756,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132938","_id":"role/176132938","_rev":"_co7R8nu--S","enumName":"Forstander","name":"Forstander","roleID":274089,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132941","_id":"role/176132941","_rev":"_co7R8nu--K","enumName":"PMOManager","name":"PMO Manager","roleID":56581,"scope":"orgLevel","securityLevel":6}}
-{"type":2300,"data":{"_key":"20039837","_id":"role/20039837","_rev":"_co7R8nu--C","enumName":"Arrangementsansvarlige","name":"Arrangementsansvarlige","roleID":72874,"scope":"globalLevel","securityLevel":5}}
-{"type":2300,"data":{"_key":"176132936","_id":"role/176132936","_rev":"_co7R8nu--Q","enumName":"BrunstadKontaktperson","name":"Brunstad Kontaktperson","roleID":290260,"scope":"orgLevel","securityLevel":9}}
-{"type":2300,"data":{"_key":"176132942","_id":"role/176132942","_rev":"_co7R8nu--G","enumName":"SentralInformasjonsmedarbeider","name":"Sentral Informasjonsmedarbeider","roleID":3762040,"scope":"globalLevel","securityLevel":3}}
-{"type":2300,"data":{"_key":"504323044","_id":"role/504323044","_rev":"_co7R8nu--U","enumName":"OrgRepresentative","name":"Representative","roleID":274090,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"502461892","_id":"role/502461892","_rev":"_co7R8nu--W","enumName":"VotingAdmin","name":"Voting Admin","roleID":78755,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132946","_id":"role/176132946","_rev":"_co7R8nu--e","enumName":"SundaySchoolLeader","name":"Sunday School Leader","roleID":78759,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"524574451","_id":"role/524574451","_rev":"_co7R8nu--g","enumName":"ITManager","name":"IT Manager","roleID":78760,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132944","_id":"role/176132944","_rev":"_co7R8nu--a","enumName":"ChairmanOfTheBoard","name":"Chairman of the Board","roleID":78757,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132939","_id":"role/176132939","_rev":"_co7R8nu--O","enumName":"Informasjonsmedarbeider","name":"Informasjonsmedarbeider","roleID":234272,"scope":"globalLevel","securityLevel":8}}
-{"type":2300,"data":{"_key":"593282036","_id":"role/593282036","_rev":"_d_IY4zW--i","enumName":"MemberOfTheBoard","name":"Member of the Board","roleID":78761,"scope":"orgLevel","securityLevel":10}}
-{"type":2300,"data":{"_key":"176132937","_id":"role/176132937","_rev":"_co7R8nu--E","enumName":"Developer","name":"Developer","roleID":62873,"scope":"globalLevel","securityLevel":2}}
-{"type":2300,"data":{"_key":"20039824","_id":"role/20039824","_rev":"_co7R8nu--A","enumName":"CentralAdministrator","name":"Central Administrator","roleID":72873,"scope":"globalLevel","securityLevel":1}}
-{"type":2300,"data":{"_key":"176132935","_id":"role/176132935","_rev":"_co7R8nu--I","enumName":"BCCAnsatt","name":"BCC Ansatt","roleID":804300000,"scope":"globalLevel","securityLevel":4}}
+{"type":2300,"data":{"_key":"176132937","_id":"role/176132937","_rev":"_co7R8nu--E","enumName":"Developer","name":"Developer","roleID":62873,"scope":"globalLevel"}}
+{"type":2300,"data":{"_key":"593282036","_id":"role/593282036","_rev":"_d_IY4zW--i","enumName":"MemberOfTheBoard","name":"Member of the Board","roleID":78761,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132942","_id":"role/176132942","_rev":"_co7R8nu--G","enumName":"SentralInformasjonsmedarbeider","name":"Sentral Informasjonsmedarbeider","roleID":3762040,"scope":"globalLevel"}}
+{"type":2300,"data":{"_key":"20039824","_id":"role/20039824","_rev":"_co7R8nu--A","enumName":"CentralAdministrator","name":"Central Administrator","roleID":72873,"scope":"globalLevel"}}
+{"type":2300,"data":{"_key":"176132946","_id":"role/176132946","_rev":"_co7R8nu--e","enumName":"SundaySchoolLeader","name":"Sunday School Leader","roleID":78759,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"502461892","_id":"role/502461892","_rev":"_co7R8nu--W","enumName":"VotingAdmin","name":"Voting Admin","roleID":78755,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"504323044","_id":"role/504323044","_rev":"_co7R8nu--U","enumName":"OrgRepresentative","name":"Representative","roleID":274090,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132941","_id":"role/176132941","_rev":"_co7R8nu--K","enumName":"PMOManager","name":"PMO Manager","roleID":56581,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132938","_id":"role/176132938","_rev":"_co7R8nu--S","enumName":"Forstander","name":"Forstander","roleID":274089,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132935","_id":"role/176132935","_rev":"_co7R8nu--I","enumName":"BCCAnsatt","name":"BCC Ansatt","roleID":804300000,"scope":"globalLevel"}}
+{"type":2300,"data":{"_key":"176132944","_id":"role/176132944","_rev":"_co7R8nu--a","enumName":"ChairmanOfTheBoard","name":"Chairman of the Board","roleID":78757,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132939","_id":"role/176132939","_rev":"_co7R8nu--O","enumName":"Informasjonsmedarbeider","name":"Informasjonsmedarbeider","roleID":234272,"scope":"globalLevel"}}
+{"type":2300,"data":{"_key":"524574451","_id":"role/524574451","_rev":"_co7R8nu--g","enumName":"ITManager","name":"IT Manager","roleID":78760,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132936","_id":"role/176132936","_rev":"_co7R8nu--Q","enumName":"BrunstadKontaktperson","name":"Brunstad Kontaktperson","roleID":290260,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132940","_id":"role/176132940","_rev":"_co7R8nu--M","enumName":"Innmelder","name":"Innmelder","roleID":78754,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132943","_id":"role/176132943","_rev":"_co7R8nu--Y","enumName":"HeadOfCommunications","name":"Head of Communications","roleID":78756,"scope":"orgLevel"}}
+{"type":2300,"data":{"_key":"176132945","_id":"role/176132945","_rev":"_co7R8nu--c","enumName":"Support","name":"Support","roleID":78760,"scope":"globalLevel"}}
+{"type":2300,"data":{"_key":"20039837","_id":"role/20039837","_rev":"_co7R8nu--C","enumName":"Arrangementsansvarlige","name":"Arrangementsansvarlige","roleID":72874,"scope":"globalLevel"}}

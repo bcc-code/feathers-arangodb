@@ -1,2 +1,1 @@
-{"type":2300,"data":{"_key":"1470831422","_id":"_apps/1470831422","_rev":"_d-xFj9a---","checksum":"9d7fb035","id":"/calculated-fields","mount":"/calculated-fields","options":{"development":false,"configuration":{},"dependencies":{}}}}
-{"type":2300,"data":{"_key":"1470831424","_id":"_apps/1470831424","_rev":"_dMoT9oK---","checksum":"be5e71b0","id":"/calculate-fields","mount":"/calculate-fields","options":{"development":false,"configuration":{},"dependencies":{}}}}
+{"type":2300,"data":{"_key":"1470831427","_id":"_apps/1470831427","_rev":"_d1QHugu---","checksum":"5e250e05","id":"/calculate-fields","mount":"/calculate-fields","options":{"development":false,"configuration":{},"dependencies":{}}}}

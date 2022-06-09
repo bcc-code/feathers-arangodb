@@ -1,4 +1,4 @@
-{"type":2300,"data":{"_key":"50358","_id":"country/50358","_rev":"_bYwkiwO--_","countryGuid":"00aaf52b-b0df-e911-a812-000d3a25c5d6","countryID":50358,"iso2Code":"nl","nameEn":"Netherlands","nameNative":"Nederland","nameNo":"Nederland"}}
-{"type":2300,"data":{"_key":"53","_id":"country/53","_rev":"_bYwkGvG--A","countryGuid":"44aaf52b-b0df-e911-a812-000d3a25c5d6","countryID":53,"iso2Code":"no","nameEn":"Norway","nameNative":"Norge","nameNo":"Norge"}}
 {"type":2300,"data":{"_key":"56361","_id":"country/56361","_rev":"_bYwlEOS--A","countryGuid":"17aaf52b-b0df-e911-a812-000d3a25c5d6","countryID":56361,"iso2Code":"ua","nameEn":"Ukraine","nameNative":"Ukraina","nameNo":"Ukraina"}}
 {"type":2300,"data":{"_key":"47287","_id":"country/47287","_rev":"_bYwk1T6--A","countryGuid":"dea9f52b-b0df-e911-a812-000d3a25c5d6","countryID":47287,"iso2Code":"za","nameEn":"South Africa","nameNative":"South Africa","nameNo":"Sør-Afrika"}}
+{"type":2300,"data":{"_key":"53","_id":"country/53","_rev":"_bYwkGvG--A","countryGuid":"44aaf52b-b0df-e911-a812-000d3a25c5d6","countryID":53,"iso2Code":"no","nameEn":"Norway","nameNative":"Norge","nameNo":"Norge"}}
+{"type":2300,"data":{"_key":"50358","_id":"country/50358","_rev":"_bYwkiwO--_","countryGuid":"00aaf52b-b0df-e911-a812-000d3a25c5d6","countryID":50358,"iso2Code":"nl","nameEn":"Netherlands","nameNative":"Nederland","nameNo":"Nederland"}}

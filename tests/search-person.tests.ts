@@ -112,9 +112,25 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
   it("Search with filter", async() => {
     const results = await service.find({query: { $search: 'daly', gender: "Male"}})
     expect(results.length).to.eq(3)
-    expect(results[0].displayName).to.eq("Philly Daly")
-    expect(results[1].displayName).to.eq("Ozzie Daly")
-    expect(results[2].displayName).to.eq("Freek Daly")
+    const displayNames = results.map(r => r.displayName)
+    expect(displayNames).to.contain("Philly Daly")
+    expect(displayNames).to.contain("Ozzie Daly")
+    expect(displayNames).to.contain("Freek Daly")
+  })
+
+  it("Search by middle name", async() => {
+    const results = await service.find({query: { $search: 'wife of philly'}})
+    expect(results[0].displayName).to.eq('Batie Sofa Daly')
+  })
+
+  it("Search by last name", async() => {
+    const results = await service.find({query: { $search: 'jerrits'}})
+    console.log(results.map(r => r.searchValue))
+    expect(results[0].lastName).to.eq('Jerrits')
+  })
+  it("search by last name typo", async() => {
+    const results = await service.find({query: { $search: 'gerrits'}})
+    expect(results[0].lastName).to.eq('Jerrits')
   })
 
   it("Search - country and church filter simultaneously", async () => {
