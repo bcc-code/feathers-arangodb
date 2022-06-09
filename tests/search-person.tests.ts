@@ -132,7 +132,10 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
     const results = await service.find({query: { $search: 'gerrits'}})
     expect(results[0].lastName).to.eq('Jerrits')
   })
-
+  it("search by last name two letter", async() => {
+    const results = await service.find({query: { $search: 'da'}})
+    expect(results[0].lastName).to.eq('Daly')
+  })
   it("Search - country and church filter simultaneously", async () => {
     const results = await service.find({ 
       query: {
