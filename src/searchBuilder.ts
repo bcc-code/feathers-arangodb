@@ -95,7 +95,7 @@ function getSearchStatement(field: SearchField, query:ModifiedQueryType):AqlQuer
     return aql`PHRASE(doc[${field.name}], ${query.value}, "space_delimited")`
   }
   
-  return aql`NGRAM_MATCH(doc[${field.name}], ${query.value}, 0.5 , "lower-trigram")`
+  return aql`NGRAM_MATCH(doc[${field.name}], ${query.value}, 0.6 , "fuzzy_search")`
 }
 
 function determineQueryType(value:string|number):ModifiedQueryType {
