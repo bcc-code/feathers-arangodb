@@ -2,20 +2,15 @@ import { BadRequest } from '@feathersjs/errors';
 
 import { aql } from "arangojs";
 import { AqlQuery } from "arangojs/aql";
-import logger from "./logger";
 
-
-type SearchQueryType = "number" | "exact" | 'fuzzy';
-type SearchOrFilter = 'SEARCH' |'FILTER';
 interface ModifiedQueryType {
-  type:SearchQueryType;
-  query:string | number;
-  searchOrFilter:SearchOrFilter;
+  exact: boolean;
+  value:string | number;
 }
 
-interface FuzzySearchField {
+interface SearchField {
   name: string;
-  analyzer: 'bcc_text' | 'identity';
+  isFuzzy: boolean;
   type: 'string' | 'number';
 }
 
@@ -32,7 +27,7 @@ function addSearch(query: string, docName: string = "doc",collection:string = "p
       searchQuery = orgSearch(docName,query);
       break;
     case 'application':
-      searchQuery = generateFuzzyStatement([{name:'name', analyzer:'bcc_text',type:'string'}],query,docName);
+      searchQuery = generateFuzzyStatement([{name:'name', isFuzzy: true, type: 'string'}],query);
       break;
     default:
       throw new BadRequest('A search has been attempted on a collection where no search logic has been defined')
@@ -42,82 +37,76 @@ function addSearch(query: string, docName: string = "doc",collection:string = "p
 }
 
 const personSearch = (doc: string,query:string) => {
-  const fuzzySearchFields: any[] = [
-    { name: 'displayName',analyzer:'bcc_text',type:'string' },
-    { name: 'email', analyzer:'identity',type:'string' },
-    { name: 'personID',analyzer:'identity',type:'number' },
+  const fuzzySearchFields: SearchField[] = [
+    { name: 'fullName', isFuzzy: true, type: 'string'},
+    { name: 'displayName', isFuzzy: true, type: 'string'},
+    { name: 'email', isFuzzy: false, type: 'string'},
+    { name: 'personID', isFuzzy: false, type: 'number'},
   ];
-  return generateFuzzyStatement(fuzzySearchFields, query, doc);
+  return generateFuzzyStatement(fuzzySearchFields, query);
 }
 
 const countrySearch = (doc: string,query:string) => {
-  const fuzzySearchFields: any[] = [
-    {name:'nameEn', analyzer:'bcc_text',type:'string'},
-    {name:'nameNo', analyzer:'bcc_text',type:'string'},
-    {name: 'countryID',analyzer:'identity',type:'number'},
+  const fuzzySearchFields: SearchField[] = [
+    {name:'nameEn', isFuzzy: true, type: 'string'},
+    {name:'nameNo', isFuzzy: true, type: 'string'},
+    {name: 'countryID', isFuzzy: false, type: 'number'},
   ];
-  return generateFuzzyStatement(fuzzySearchFields, query, doc);
+  return generateFuzzyStatement(fuzzySearchFields, query);
 }
 
 const orgSearch = (doc: string,query:string) => {
-  const fuzzySearchFields: any[] = [
-    {name:'name', analyzer:'bcc_text',type:'string'},
-    {name: 'orgID',analyzer:'identity',type:'number'},
+  const fuzzySearchFields: SearchField[] = [
+    {name:'name', isFuzzy: true, type: 'string'},
+    {name: 'orgID', isFuzzy: false, type: 'number'},
   ];
-  return generateFuzzyStatement(fuzzySearchFields, query, doc);
+  return generateFuzzyStatement(fuzzySearchFields, query);
 }
 
-function generateFuzzyStatement(fields:FuzzySearchField[], query:unknown ,doc:string): AqlQuery | undefined{
+function generateFuzzyStatement(fields:SearchField[], query:any): AqlQuery | undefined{
   const modifiedQuery:ModifiedQueryType = determineQueryType(query);
-  const numberField = fields.find(f => f.type === 'number');
-  const stringFields = fields.filter(f => f.type === 'string');
-
   const searchStatements:AqlQuery[] = [];
-  switch (modifiedQuery.type) {
-    case "number":
-      if(!numberField) throw new BadRequest('Cannot search by number for this collection');
-      searchStatements.push(aql`doc[${numberField.name}] == ${modifiedQuery.query}`);
-      break;
-    case "fuzzy":
-      if(!stringFields.length) throw new BadRequest('Cannot search by string for this collection');
-      for (const field of stringFields) {
-        searchStatements.push(aql`ANALYZER(doc[${field.name}] IN TOKENS(${modifiedQuery.query},${field.analyzer}),${field.analyzer})`);
-      }
-      break;
-    case "exact":
-      if(!stringFields.length) throw new BadRequest('Cannot search by string for this collection');
-      for (const field of stringFields) {
-        searchStatements.push(aql`CONTAINS(LOWER(doc[${field.name}]),LOWER(${modifiedQuery.query}))`);
-      }
-      break;
-    default:
-      throw logger.error(`Unable to determine the type of search query between number,exact or fuzzy.`, {query: query});
+
+  for(const field of fields){
+    const statement = getSearchStatement(field, modifiedQuery);
+    if (!statement) continue;
+    searchStatements.push(
+      statement
+    )
   }
 
   if(!searchStatements.length) return undefined;
 
   const searchConditions = aql.join(searchStatements, ' OR ');
   const result = aql.join([
-    aql.literal(modifiedQuery.searchOrFilter),
+    aql.literal("SEARCH"),
     searchConditions,
     aql`SORT BM25(doc) desc`,
   ])
   return result;
 }
 
-function determineQueryType(query:unknown):ModifiedQueryType {
-  if(typeof query === 'number') query = query.toString();
-  if(typeof query !== 'string') throw new BadRequest('Invalid query type');
-
-  const queryInt = parseInt(query);
-  if(!isNaN(queryInt)) return {type:"number",query:queryInt,searchOrFilter:"SEARCH"};
-
-  if(hasQuotes(query)){
-      const queryWithoutQoutes = query.slice(1, -1);
-      return {type:"exact", query:queryWithoutQoutes, searchOrFilter:"FILTER"};
+function getSearchStatement(field: SearchField, query:ModifiedQueryType):AqlQuery | undefined{
+  if (typeof query.value !== field.type) return undefined
+  if (!field.isFuzzy) {
+      return aql`doc[${field.name}] == ${query.value}`
   }
+  if (query.exact){
+    return aql`PHRASE(doc[${field.name}], ${query.value}, "space_delimited")`
+  }
+  
+  return aql`NGRAM_MATCH(doc[${field.name}], ${query.value}, 0.5 , "lower-trigram")`
+}
 
-  return {type:"fuzzy", query:query, searchOrFilter:"SEARCH"};
+function determineQueryType(value:string|number):ModifiedQueryType {
+  if(!['string', 'number'].includes(typeof value)) throw new BadRequest('Invalid query type');
+
+  let exact = false;
+  if(typeof value === 'string' && hasQuotes(value)){
+      value = value.slice(1, -1);
+      exact = true
+  }
+  return {value, exact};
 }
 
 const hasQuotes = (string: string) => {

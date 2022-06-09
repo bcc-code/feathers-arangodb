@@ -37,13 +37,8 @@ describe(`Search tests on the application service `, () => {
   });
 
   it("Search - application by number -> unsupported", async () => {
-    try {
-      const results = await service.find({ query: { $search: '522409136' } });
-      
-      assert.fail("Invalid input should result in error");
-    } catch (err: unknown) {
-      checkError(err, 'Cannot search by number for this collection');
-    }
+    const results = await service.find({ query: { $search: '522409136' } });
+    expect(results.length).to.eq(0)
   });
 
 });
