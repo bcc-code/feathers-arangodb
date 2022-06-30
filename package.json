@@ -1,6 +1,6 @@
 {
   "name": "@bcc-code/feathers-arangodb",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "ArangoDB Service/Adapter for FeathersJS",
   "homepage": "https://github.com/AnatidaeProject/feathers-arangodb",
   "main": "lib/",
@@ -29,7 +29,7 @@
     "test:debug": "npm run build && npm run mocha:debug",
     "clean": "shx rm -rf lib/ && shx rm -rf test/data/",
     "coverage": "nyc npm run mocha",
-    "mocha": "npm run clean && cross-env NODE_ENV=test ts-mocha \"tests/*.ts\" --recursive --timeout 5000 --exit",
+    "mocha": "npm run clean && cross-env NODE_ENV=test LOGGING_LEVEL=info ts-mocha \"tests/*.ts\" --recursive --timeout 5000 --exit",
     "mocha:debug": "npm run clean && cross-env NODE_ENV=test ts-mocha \"tests/*.ts\" --inspect-brk=0.0.0.0:9555 --recursive --timeout 50000 --exit",
     "build": "tsc"
   },

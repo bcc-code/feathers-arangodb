@@ -355,7 +355,6 @@ describe(`Feathers common tests, ${serviceName} service with \\${idProp}\\ id pr
           query: { friends: { $elemMatch: { name: {$in: ['Bob','Doug']}}}}
         };
         const result = <any[]>await service.find(params);
-        console.log('Result',result)
         expect(result.length).to.eq(2);
         const names = result.map(r => r.name)
         assert.include(names,'Mike')

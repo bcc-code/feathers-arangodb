@@ -1,32 +1,31 @@
 import {createLogger, format, transports} from 'winston';
 import {LoggingWinston} from '@google-cloud/logging-winston';
 
-const isLocalEnvironment = process.env.K_SERVICE ? false : true;
-const serviceName = process.env.K_SERVICE ?? 'localhost';
+const isLocalEnvironment = process.env.NODE_ENV !== 'production';
+const serviceName = isLocalEnvironment ? 'development' : process.env.K_SERVICE;
+const desiredLogLevel = process.env.LOGGING_LEVEL || 'debug';
+
+const logFormat = format.printf(function(info) {
+  const { level, message, ...json } = info;
+  return `${level}: ${message} ${JSON.stringify(json, null, 4)}\n`;
+});
+
+const consoleTransport = new transports.Console({
+    level: desiredLogLevel,
+    format: format.combine(
+      format.colorize(),
+      logFormat,
+    ),
+});
 
 const loggingWinston = new LoggingWinston({
+    level: desiredLogLevel,
     logName: `${serviceName}-FeathersArangoAdapter-logs`,
-    serviceContext: {
-        service: serviceName,
-    },
-    resource: {
-        type: 'cloud_run_revision',
-        labels: {
-          service_name: serviceName,
-          revision_name: process.env.K_REVISION ?? '',
-          configuration: process.env.K_CONFIGURATION ?? '',
-        }
-    },
-    labels: {
-        component: 'FeathersArangoAdapter',
-        service: serviceName,
-    } as {},
 });
 
 const logger = createLogger({
-    level: 'debug',
-    format: format.combine(format.splat(), format.simple()),
-    transports: isLocalEnvironment ? [new transports.Console()] : [loggingWinston],
+    transports: isLocalEnvironment ? [consoleTransport] : [loggingWinston],
 });
 
+logger.level = desiredLogLevel;
 export default logger;
