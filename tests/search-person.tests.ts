@@ -125,7 +125,6 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
 
   it("Search by last name", async() => {
     const results = await service.find({query: { $search: 'jerrits'}})
-    console.log(results.map(r => r.searchValue))
     expect(results[0].lastName).to.eq('Jerrits')
   })
   it("search by last name typo", async() => {
@@ -137,7 +136,7 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
     expect(results[0].lastName).to.eq('Daly')
   })
   it("Search - country and church filter simultaneously", async () => {
-    const results = await service.find({ 
+    const results = await service.find({
       query: {
         churchID: {
           $in: [

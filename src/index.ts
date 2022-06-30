@@ -384,7 +384,7 @@ export class DbService<T> {
       " "
     );
 
-    logger.debug("Generated aql:", {query: query.query, bindVars: query.bindVars, collection, view});
+    logger.debug("Generated aql:", {query: query.query, bindVars: query.bindVars});
 
     const result = (await this._returnMap(
       database,

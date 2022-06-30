@@ -1,6 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { assert } from 'chai';
+import logger from '../../src/logger';
 
 
 // `exec()` is async and does not return a promise...
@@ -24,11 +25,12 @@ const importDB = async (): Promise<void> => {
   // Execute the bat script
   await execPromise(bat)
   .catch((cause) => {
-      console.error(cause);
+      logger.error(cause);
       assert.fail('The import of test data failed with Error: ',cause);
     })
-  .then( ({stdout}) => {
-    console.log('Test data was imported in the fresh database: ',stdout);
+  .then(({stdout}) => {
+    logger.debug('Test data was imported in the fresh database: ');
+    logger.debug(stdout);
   });
  }
 
