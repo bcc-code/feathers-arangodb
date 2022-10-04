@@ -20,9 +20,6 @@ describe(`Write-write conflict prevention tests`, () => {
     before(async () => {
         db = new RetryDatabase({
             databaseName: testDatabase,
-            agentOptions: {
-                maxSockets: 3
-            },
             retryOnConflict: 2
         })
         db.useBasicAuth(testUser, testPass);
@@ -65,7 +62,7 @@ describe(`Write-write conflict prevention tests`, () => {
 
     it("Two requests at the same time don't cause an error", async () => {
         const promises:Promise<any>[] = []
-        for(let i = 0; i < 5; i++) {
+        for(let i = 0; i < 10; i++) {
             promises.push(db.query(getQuery(i)))
         }
         await Promise.all(promises);
@@ -73,7 +70,7 @@ describe(`Write-write conflict prevention tests`, () => {
 
     it("Can overwrite the limit locally", async () => {
         const promises:Promise<any>[] = []
-        for(let i = 0; i < 5; i++) {
+        for(let i = 0; i < 10; i++) {
             promises.push(db.query(getQuery(i), {retryOnConflict: 0}))
         }
         try {
@@ -83,7 +80,7 @@ describe(`Write-write conflict prevention tests`, () => {
             if(isArangoError(err))
                 assert.equal(err.errorNum, 1200)
             else 
-                assert.fail("Incorrect error")
+                assert.fail(err)
         }
     });
 })
