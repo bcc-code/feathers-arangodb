@@ -16,7 +16,7 @@ export class RetryDatabase extends AutoDatabse {
     constructor(config?: RetryDatabaseConfig) {
       super(config);
       this.retryOnConflict = config?.retryOnConflict ?? 0
-      this._connection = new RetryConnection();
+      this._connection = new RetryConnection(config);
     }
 
     query<T = any>(
