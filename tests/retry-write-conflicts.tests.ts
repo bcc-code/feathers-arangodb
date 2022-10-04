@@ -20,6 +20,9 @@ describe(`Write-write conflict prevention tests`, () => {
     before(async () => {
         db = new RetryDatabase({
             databaseName: testDatabase,
+            agentOptions: {
+                maxSockets: 10,
+            },
             retryOnConflict: 2
         })
         db.useBasicAuth(testUser, testPass);
@@ -68,6 +71,7 @@ describe(`Write-write conflict prevention tests`, () => {
         await Promise.all(promises);
     });
 
+    // This test might be flaky because it tries to cause a write-write conflict which is dependent on the database
     it("Can overwrite the limit locally", async () => {
         const promises:Promise<any>[] = []
         for(let i = 0; i < 10; i++) {
