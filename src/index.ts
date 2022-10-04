@@ -21,6 +21,8 @@ import { GraphVertexCollection } from "arangojs/graph";
 import { ArrayCursor } from "arangojs/cursor";
 import { View } from "arangojs/view";
 import logger from "./logger";
+import { isArangoTransaction, Transaction } from "arangojs/transaction";
+import { isArangoError } from "arangojs/error";
 
 export declare type ArangoDbConfig =
   | string
@@ -314,24 +316,29 @@ export class DbService<T> {
     query: AqlQuery,
     errorMessage?: string,
     removeArray = true,
-    paging = false
+    paging = false,
+    transaction?: Transaction,
   ) {
-    const cursor: ArrayCursor<T> = <ArrayCursor>(
-      await database
-        .query(query, {fullCount: paging})
-        .catch((error) => {
-          if (
-            error &&
-            error.isArangoError &&
-            error.errorNum === 1202 &&
-            errorMessage
-          ) {
-            throw new NotFound(errorMessage);
-          } else {
-            throw error;
-          }
-        })
-    );
+    async function getCursor() {
+      try {
+        return await database
+          .query(query, { fullCount: paging });
+      } catch (error) {
+        if (isArangoError(error) &&
+          error.errorNum === 1202 &&
+          errorMessage) {
+          throw new NotFound(errorMessage);
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    let cursor: ArrayCursor;
+    if(isArangoTransaction(transaction)) cursor = await transaction.step(getCursor);
+    else cursor = await getCursor();
+
+
     const unfiltered: T[] = await cursor.map((item) => item);
     const result = unfiltered.filter((item) => item != null);
 
@@ -391,7 +398,8 @@ export class DbService<T> {
       query,
       undefined,
       false,
-      !_isEmpty(this._paginate)
+      !_isEmpty(this._paginate),
+      params.transaction
     )) as any;
 
     if (!_isEmpty(this._paginate)) {
@@ -430,7 +438,7 @@ export class DbService<T> {
       ],
       " "
     );
-    return this._returnMap(database, query, `No record found for id '${id}'`);
+    return this._returnMap(database, query, `No record found for id '${id}'`, true, false, params.transaction);
   }
 
 
@@ -447,7 +455,7 @@ export class DbService<T> {
           INSERT item IN ${collection}
           let doc = NEW
         ${queryBuilder.returnFilter}`;
-    return this._returnMap(database, query);
+    return this._returnMap(database, query, undefined, true, false, params.transaction);
   }
 
   public async _replaceOrPatch(
@@ -459,8 +467,9 @@ export class DbService<T> {
     const { database, collection } = await this.connect();
     const ids: NullableId[] = Array.isArray(id) ? id : [id];
     let query: AqlQuery;
+    const queryBuilder = new QueryBuilder(params, "", "doc", "changed");
     if (ids.length > 0 && (ids[0] != null || ids[0] != undefined)) {
-      const queryBuilder = new QueryBuilder(params, "", "doc", "changed");
+      
       query = aql.join(
         [
           aql`FOR doc IN ${ids}`,
@@ -472,7 +481,6 @@ export class DbService<T> {
         " "
       );
     } else {
-      const queryBuilder = new QueryBuilder(params, "", "doc", "changed");
       query = aql.join(
         [
           aql`FOR doc IN ${collection}`,
@@ -487,7 +495,7 @@ export class DbService<T> {
         " "
       );
     }
-    return this._returnMap(database, query, `No record found for id '${id}'`);
+    return this._returnMap(database, query, `No record found for id '${id}'`, true, false, params.transaction);
   }
 
   public async update(
@@ -519,8 +527,8 @@ export class DbService<T> {
     }
     // Build query
     let query: AqlQuery;
+    const queryBuilder = new QueryBuilder(params, "", "doc", "removed");
     if (id && (!Array.isArray(id) || (Array.isArray(id) && id.length > 0))) {
-      const queryBuilder = new QueryBuilder(params, "", "doc", "removed");
       query = aql`
         FOR doc IN ${ids}
           REMOVE doc IN ${collection}
@@ -528,7 +536,6 @@ export class DbService<T> {
           ${queryBuilder.returnFilter}
       `;
     } else {
-      const queryBuilder = new QueryBuilder(params, "", "doc", "removed");
       query = aql.join(
         [
           aql`FOR doc IN ${collection}`,
@@ -543,11 +550,7 @@ export class DbService<T> {
       );
     }
 
-    return this._returnMap(database, query);
-    // let cursor: ArrayCursor;
-    // cursor = await database.query(query);
-    // let result: any[] = await cursor.map(item => this.fixKeyReturn(item));
-    // return result.length > 1 ? result : result[0];
+    return this._returnMap(database, query, undefined, true, false, params.transaction);
   }
 
   public async setup(app: Application, path: string) {
