@@ -15,7 +15,6 @@ import {
 import _isEmpty from "lodash/isEmpty";
 import isString from "lodash/isString";
 import omit from "lodash/omit";
-import { AutoDatabse } from "./auto-database";
 import { LogicalOperator, QueryBuilder } from "./queryBuilder";
 import { GraphVertexCollection } from "arangojs/graph";
 import { ArrayCursor } from "arangojs/cursor";
@@ -23,6 +22,8 @@ import { View } from "arangojs/view";
 import logger from "./logger";
 import { isArangoTransaction, Transaction } from "arangojs/transaction";
 import { isArangoError } from "arangojs/error";
+import { RetryDatabase } from "./retry-database";
+import { AutoDatabse } from "./auto-database";
 
 export declare type ArangoDbConfig =
   | string
@@ -103,7 +104,7 @@ export class DbService<T> {
   public readonly options: IOptions;
   private readonly _id: string;
   private _database: AutoDatabse | Database | undefined;
-  private _databasePromise: Promise<AutoDatabse | Database> | undefined;
+  private _databasePromise: Promise<Database> | undefined;
   private _collection: DocumentCollection | GraphVertexCollection | undefined;
   private _collectionPromise:
     | Promise<DocumentCollection | GraphVertexCollection>
@@ -137,7 +138,7 @@ export class DbService<T> {
     /* istanbul ignore next */
     if (options.database instanceof Promise) {
       this._databasePromise = options.database;
-    } else if (options.database instanceof AutoDatabse) {
+    } else if (options.database instanceof Database) {
       this._database = options.database;
     } else if (!isString(options.database)) {
       throw new Error("Database reference or name (string) is required");
@@ -186,7 +187,7 @@ export class DbService<T> {
     }
     /* istanbul ignore next */
     if (this._database === undefined) {
-      let db = new AutoDatabse(dbConfig);
+      let db = new RetryDatabase(dbConfig);
       switch (authType) {
         case AUTH_TYPES.BASIC_AUTH:
           db.useBasicAuth(username, password);
@@ -213,7 +214,7 @@ export class DbService<T> {
       if (this._database instanceof AutoDatabse) {
         this._graph = await this._database.autoGraph(properties, opts);
       } else {
-        throw `Auto creation of graphs requires instance of AutoDatabase`;
+        throw `Auto creation of graphs requires instance of AutoDatabse`;
       }
     }
 
@@ -228,7 +229,7 @@ export class DbService<T> {
           this.options.collection as string
         );
       } else {
-        throw `Auto creation of collections requires instance of AutoDatabase`;
+        throw `Auto creation of collections requires instance of AutoDatabse`;
       }
     }
 
@@ -242,7 +243,7 @@ export class DbService<T> {
           this.options.view as string
         );
       } else {
-        throw `Auto creation of collections requires instance of AutoDatabase`;
+        throw `Auto creation of collections requires instance of AutoDatabse`;
       }
     }
 
@@ -257,7 +258,7 @@ export class DbService<T> {
     return this._id;
   }
 
-  get database(): AutoDatabse | Database | undefined {
+  get database(): RetryDatabase | Database | undefined {
     return this._database;
   }
 
@@ -312,7 +313,7 @@ export class DbService<T> {
   }
 
   public async _returnMap(
-    database: AutoDatabse | Database,
+    database: Database,
     query: AqlQuery,
     errorMessage?: string,
     removeArray = true,

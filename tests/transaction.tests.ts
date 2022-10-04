@@ -52,7 +52,7 @@ describe(`Tests for added transaction functionality`, () => {
         await service.remove(_ids.Bob).catch(() => {});
     })
 
-    it.only("Successful transaction updates data", async () => {
+    it("Successful transaction updates data", async () => {
         const col = db.collection(testCollection);
         const transaction = await db.beginTransaction({write: [col]})
         const intermediateResult = await service.patch(_ids.Doug, {
@@ -74,7 +74,7 @@ describe(`Tests for added transaction functionality`, () => {
         assert.equal(doug.name, "Doug 2");
     })
 
-    it.only("Aborted transaction doesn't update data", async () => {
+    it("Aborted transaction doesn't update data", async () => {
         const col = db.collection(testCollection);
         const transaction = await db.beginTransaction({write: [col]})
         const intermediateResult = await service.patch(_ids.Doug, {
