@@ -11,8 +11,6 @@ export interface RetryDatabaseConfig extends Config {
     retryOnConflict?: number;
 }
 
-export type QueryArgs = [AqlQuery, QueryOptions?] | [AqlLiteral | string, Dict<any>?, QueryOptions?]
-
 export class RetryDatabase extends AutoDatabse {
     retryOnConflict: number; 
     constructor(config?: RetryDatabaseConfig) {
