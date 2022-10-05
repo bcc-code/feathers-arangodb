@@ -104,7 +104,7 @@ export class DbService<T> {
   public readonly options: IOptions;
   private readonly _id: string;
   private _database: AutoDatabse | Database | undefined;
-  private _databasePromise: Promise<Database> | undefined;
+  private _databasePromise: Promise<AutoDatabse | Database> | undefined;
   private _collection: DocumentCollection | GraphVertexCollection | undefined;
   private _collectionPromise:
     | Promise<DocumentCollection | GraphVertexCollection>
@@ -214,7 +214,7 @@ export class DbService<T> {
       if (this._database instanceof AutoDatabse) {
         this._graph = await this._database.autoGraph(properties, opts);
       } else {
-        throw `Auto creation of graphs requires instance of AutoDatabse`;
+        throw `Auto creation of graphs requires instance of AutoDatabase`;
       }
     }
 
@@ -229,7 +229,7 @@ export class DbService<T> {
           this.options.collection as string
         );
       } else {
-        throw `Auto creation of collections requires instance of AutoDatabse`;
+        throw `Auto creation of collections requires instance of AutoDatabase`;
       }
     }
 
@@ -243,7 +243,7 @@ export class DbService<T> {
           this.options.view as string
         );
       } else {
-        throw `Auto creation of collections requires instance of AutoDatabse`;
+        throw `Auto creation of collections requires instance of AutoDatabase`;
       }
     }
 
@@ -258,7 +258,7 @@ export class DbService<T> {
     return this._id;
   }
 
-  get database(): RetryDatabase | Database | undefined {
+  get database(): AutoDatabse | Database | undefined {
     return this._database;
   }
 
