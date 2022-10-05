@@ -15,7 +15,6 @@ import {
 import _isEmpty from "lodash/isEmpty";
 import isString from "lodash/isString";
 import omit from "lodash/omit";
-import { AutoDatabse } from "./auto-database";
 import { LogicalOperator, QueryBuilder } from "./queryBuilder";
 import { GraphVertexCollection } from "arangojs/graph";
 import { ArrayCursor } from "arangojs/cursor";
@@ -23,6 +22,8 @@ import { View } from "arangojs/view";
 import logger from "./logger";
 import { isArangoTransaction, Transaction } from "arangojs/transaction";
 import { isArangoError } from "arangojs/error";
+import { RetryDatabase } from "./retry-database";
+import { AutoDatabse } from "./auto-database";
 
 export declare type ArangoDbConfig =
   | string
@@ -137,7 +138,7 @@ export class DbService<T> {
     /* istanbul ignore next */
     if (options.database instanceof Promise) {
       this._databasePromise = options.database;
-    } else if (options.database instanceof AutoDatabse) {
+    } else if (options.database instanceof Database) {
       this._database = options.database;
     } else if (!isString(options.database)) {
       throw new Error("Database reference or name (string) is required");
@@ -186,7 +187,7 @@ export class DbService<T> {
     }
     /* istanbul ignore next */
     if (this._database === undefined) {
-      let db = new AutoDatabse(dbConfig);
+      let db = new RetryDatabase(dbConfig);
       switch (authType) {
         case AUTH_TYPES.BASIC_AUTH:
           db.useBasicAuth(username, password);
@@ -312,7 +313,7 @@ export class DbService<T> {
   }
 
   public async _returnMap(
-    database: AutoDatabse | Database,
+    database: Database,
     query: AqlQuery,
     errorMessage?: string,
     removeArray = true,

@@ -9,7 +9,6 @@ import { AqlQuery, AqlValue, GeneratedAqlQuery } from "arangojs/aql";
 import { AqlLiteral } from "arangojs/aql";
 import { addSearch } from "./searchBuilder"
 import logger from "./logger";
-import { isArangoTransaction, Transaction } from "arangojs/transaction";
 
 export enum LogicalOperator {
   And = " AND ",
@@ -36,7 +35,6 @@ export class QueryBuilder {
     "$resolve",
     "$search",
     "$elemMatch",
-    "$transaction",
   ];
   bindVars: { [key: string]: any } = { };
   maxLimit = 1000000000; // A billion records...

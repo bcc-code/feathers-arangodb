@@ -1,8 +1,8 @@
 import { AqlLiteral, AqlQuery, isAqlLiteral, isAqlQuery } from "arangojs/aql";
-import { Config, Connection, Dict, RequestOptions } from "arangojs/connection";
+import { Config, Connection } from "arangojs/connection";
 import { ArrayCursor } from "arangojs/cursor";
-import { QueryOptions, Database } from "arangojs/database";
-import { isArangoError, isSystemError } from "arangojs/error";
+import { QueryOptions } from "arangojs/database";
+import { isSystemError } from "arangojs/error";
 import { Errback } from "arangojs/lib/errback";
 import { ArangojsResponse } from "arangojs/lib/request.node";
 import { AutoDatabse } from "./auto-database";
@@ -16,7 +16,7 @@ export class RetryDatabase extends AutoDatabse {
     constructor(config?: RetryDatabaseConfig) {
       super(config);
       this.retryOnConflict = config?.retryOnConflict ?? 0
-      this._connection = new RetryConnection();
+      this._connection = new RetryConnection(config);
     }
 
     query<T = any>(
