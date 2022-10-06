@@ -29,6 +29,10 @@ function addSearch(query: string, docName: string = "doc",collection:string = "p
     case 'application':
       searchQuery = generateFuzzyStatement([{name:'name', isFuzzy: true, type: 'string'}],query);
       break;
+    case 'membership_status_read':
+    case 'membership_action_read':
+        searchQuery = membershipSearch(docName,query);
+        break;
     default:
       throw new BadRequest('A search has been attempted on a collection where no search logic has been defined')
   }
@@ -59,6 +63,14 @@ const orgSearch = (doc: string,query:string) => {
   const fuzzySearchFields: SearchField[] = [
     {name:'name', isFuzzy: true, type: 'string'},
     {name: 'orgID', isFuzzy: false, type: 'number'},
+  ];
+  return generateFuzzyStatement(fuzzySearchFields, query);
+}
+
+const membershipSearch = (doc: string,query:string) => {
+  const fuzzySearchFields: SearchField[] = [
+    {name:'applicantName', isFuzzy: true, type: 'string'},
+    {name: 'applicantID', isFuzzy: false, type: 'number'},
   ];
   return generateFuzzyStatement(fuzzySearchFields, query);
 }

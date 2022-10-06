@@ -1,0 +1,4 @@
+{"type":2300,"data":{"_key":"85105","_id":"conversation/85105","_rev":"_eoUpz4y---","type":"MembershipDenial","scope":{"org":"org/69","person":"person/54515"}, "status": "open"}}
+{"type":2300,"data":{"_key":"4468804","_id":"conversation/4468804","_rev":"_eoUpz4y--_","type":"MembershipDenial","scope":{"org":"org/69","person":"person/29449"}, "status": "open"}}
+{"type":2300,"data":{"_key":"4468852","_id":"conversation/4468852","_rev":"_eoUpz4y--A","type":"MembershipDenial","scope":{"org":"org/326","person":"person/51925"}, "status": "open"}}
+{"type":2300,"data":{"_key":"4468853","_id":"conversation/4468853","_rev":"_eoUx7jG---","type":"MembershipDenial","scope":{"org":"org/326","person":"person/54517"}, "status": "open"}}
