@@ -111,9 +111,11 @@ describe(`Search & Query tests on the ${serviceName} service `,async () => {
 
   it("Search with filter", async() => {
     const results = await service.find({query: { $search: 'daly', gender: "Male"}})
-    expect(results.length).to.eq(3)
+    expect(results.length).to.eq(4)
     const displayNames = results.map(r => r.displayName)
+
     expect(displayNames).to.contain("Philly Daly")
+    expect(displayNames).to.contain("Stevie Daly")
     expect(displayNames).to.contain("Ozzie Daly")
     expect(displayNames).to.contain("Freek Daly")
   })
