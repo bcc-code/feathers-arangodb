@@ -46,8 +46,8 @@ describe(`Feathers search tests`, () => {
             {name: 'Alex Doe', email: "alex.doe@example.com", age: 5},
             {name: 'Kate Doe', email: "kate.doe@example.com", age: 4},
 
-            {name: 'Adam Harry Smith', email: "adam@example.com", age: 4},
-            {name: 'Bob Harry Smith', email: "bob@example.com", age: 4},
+            {name: 'Adam Harry Smith', email: "adam@example.com", age: 12},
+            {name: 'Bob Harry Smith', email: "bob@example.com", age: 13},
         ]);
 
         await new Promise(res => setTimeout(res, 2000)); // Wait for view creation
