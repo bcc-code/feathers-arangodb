@@ -372,11 +372,9 @@ export class DbService<T> {
 
     const query = aql.join(
       [
-        queryBuilder.withStatement,
-        queryBuilder.tokensStatement,
         aql`FOR doc in ${view ?? collection}`,
-        queryBuilder.search,
-        queryBuilder.filter,
+        queryBuilder.filter ? (view ? aql`SEARCH` : aql`FILTER`) : aql``,
+        queryBuilder.filter ?? aql``,
         queryBuilder.sort,
         queryBuilder.limit,
         queryBuilder.returnFilter,
@@ -420,10 +418,8 @@ export class DbService<T> {
 
     const query: AqlQuery = aql.join(
       [
-        queryBuilder.withStatement
-        ? queryBuilder.withStatement
-        : aql``,
         aql`FOR doc IN ${collection}`,
+        queryBuilder.filter ? aql`FILTER`: aql``,
         queryBuilder.filter,
         queryBuilder.returnFilter,
       ],
@@ -475,6 +471,7 @@ export class DbService<T> {
       query = aql.join(
         [
           aql`FOR doc IN ${collection}`,
+          queryBuilder.filter ? aql`FILTER`: aql``,
           queryBuilder.filter,
           aql.literal(`${fOpt}`),
           aql`doc WITH ${data} IN ${collection}`,
@@ -528,6 +525,7 @@ export class DbService<T> {
       query = aql.join(
         [
           aql`FOR doc IN ${collection}`,
+          queryBuilder.filter ? aql`FILTER`: aql``,
           queryBuilder.filter,
           aql`REMOVE doc IN ${collection}`,
           aql`LET removed = OLD`,

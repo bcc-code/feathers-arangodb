@@ -46,9 +46,9 @@ export class QueryBuilder {
   _sort?: AqlQuery;
   searchFields: SearchField[];
   _filter?: AqlQuery;
+  docName = "doc";
+  returnDocName = "doc";
   returnFilter?: AqlQuery | AqlLiteral;
-  withStatement?: AqlQuery;
-  tokensStatement?: AqlQuery
   varCount: number = 0;
 
   constructor(
@@ -58,18 +58,20 @@ export class QueryBuilder {
     searchFields: SearchField[] = []
   ) {
     this.searchFields = searchFields
-    this.create(params, docName, returnDocName);
+    this.docName = docName
+    this.returnDocName = returnDocName
+    this.create(params);
   }
 
-  getParameterizedPath(path: string, docName:string = 'doc'): GeneratedAqlQuery {
+  getParameterizedPath(path: string, basePath: string): GeneratedAqlQuery {
     const pathArray = path.split('.').map((field:string) => aql`[${field}]`)
     return aql.join([
-      aql.literal(docName),
+      aql.literal(basePath),
       ...pathArray
     ], '')
   }
 
-  projectRecursive(o: object, docName: string): AqlValue {
+  projectRecursive(o: object): AqlValue {
     const result = Object.keys(o).map((field: string, ind: number) => {
       const v: any = _get(o, field);
       return aql.join(
@@ -78,10 +80,10 @@ export class QueryBuilder {
           _isObject(v)
             ? aql.join([
               aql.literal("{"),
-              this.projectRecursive(v, docName),
+              this.projectRecursive(v),
               aql.literal("}"),
             ])
-            : this.getParameterizedPath(v, docName),
+            : this.getParameterizedPath(v, this.returnDocName),
         ],
         " "
       );
@@ -90,11 +92,11 @@ export class QueryBuilder {
     return aql.join(result, ", ");
   }
 
-  selectBuilder(params: Params, docName: string = "doc"): AqlQuery | AqlLiteral {
+  selectBuilder(params: Params): AqlQuery | AqlLiteral {
     const select:string[] | undefined = params.query?.$select
 
     if(!select?.length)
-      return aql.literal(`RETURN ${docName}`);
+      return aql.literal(`RETURN ${this.returnDocName}`);
 
     const ret = { };
     select.forEach((fieldName: string) => {
@@ -104,7 +106,7 @@ export class QueryBuilder {
     return aql.join(
       [
         aql`RETURN {`,
-        this.projectRecursive(ret, docName),
+        this.projectRecursive(ret),
         aql`}`,
       ],
       " "
@@ -113,26 +115,23 @@ export class QueryBuilder {
 
   create(
     params: Params,
-    docName: string = "doc",
-    returnDocName: string = "doc"
   ): QueryBuilder {
-    this.returnFilter = this.selectBuilder(params, returnDocName);
+    this.returnFilter = this.selectBuilder(params);
     const query = _get(params, "query", null);
     logger.debug("Query object received from client:", query)
-    this._runCheck(query, docName);
+    this._runCheck(query);
     return this;
   }
 
   _runCheck(
     query: unknown,
-    docName: string = "doc",
   ) {
     if(!isQueryObject(query)) return this;
     if (query.$limit !== undefined) this._limit = parseIntTypeSafe(query.$limit)
     if (query.$skip !== undefined) this._skip = parseIntTypeSafe(query.$skip)
-    if (query.$sort !== undefined) this._sort = this.addSort(query.$sort, docName)
+    if (query.$sort !== undefined) this._sort = this.addSort(query.$sort)
     if (query.$search !== undefined) this._search = this.addSearch(this.searchFields, query.$search)
-    this._filter = this._aqlFilterFromFeathersQuery(query, aql.literal(docName))
+    this._filter = this._aqlFilterFromFeathersQuery(query, aql.literal(this.docName))
   }
 
   _aqlFilterFromFeathersQuery(
@@ -204,13 +203,13 @@ export class QueryBuilder {
     return aql`(${combined})`
   }
 
-  addSort(sort: unknown, docName: string = "doc"): AqlQuery | undefined {
+  addSort(sort: unknown): AqlQuery | undefined {
     if(!isQueryObject(sort)) throw new BadRequest("Sort has incorrect type")
     if (Object.keys(sort).length > 0) {
       return aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.join([
-            this.getParameterizedPath(key, docName),
+            this.getParameterizedPath(key, this.docName),
             aql.literal(parseIntTypeSafe(sort[key]) === -1 ? "DESC" : "")
           ], ' ');
         }),
@@ -236,24 +235,26 @@ export class QueryBuilder {
   }
 
   get sort(): AqlQuery {
+    if (this._search) {
+      return aql`SORT BM25(${aql.literal(this.docName)}) desc`
+    }
     if (this._sort) {
       return aql`SORT ${this._sort}`
     }
     return aql``
   }
 
-  get search(): AqlQuery {
-    if (this._search) {
-      return aql`SEARCH ${this._search}`
+  get filter(): AqlQuery | undefined {
+    const filterParts:AqlQuery[] = []
+    if(this._search) {
+      filterParts.push(aql`(${this._search})`)
     }
-    return aql``
-  }
-
-  get filter(): AqlQuery {
     if(this._filter) {
-      return aql`FILTER ${this._filter}`
+      filterParts.push(aql`(${this._filter})`)
     }
-    return aql``
+    if(!filterParts.length)
+      return undefined
+    return aql.join(filterParts, LogicalOperator.And)
   }
 
 }

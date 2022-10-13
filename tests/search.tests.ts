@@ -45,6 +45,9 @@ describe(`Feathers search tests`, () => {
             {name: 'Mary Doe', email: "mary.doe@example.com", age: 30},
             {name: 'Alex Doe', email: "alex.doe@example.com", age: 5},
             {name: 'Kate Doe', email: "kate.doe@example.com", age: 4},
+
+            {name: 'Adam Harry Smith', email: "adam@example.com", age: 4},
+            {name: 'Bob Harry Smith', email: "bob@example.com", age: 4},
         ]);
 
         await new Promise(res => setTimeout(res, 2000)); // Wait for view creation
@@ -71,6 +74,16 @@ describe(`Feathers search tests`, () => {
         })
         assert.equal(res.length, 1)
         assert.equal(res[0].name, "John Doe")
+    })
+
+    it("Fuzzy search with filter", async() => {
+        const res = await service.find({
+            query: {
+                $search: "Doe",
+                age: {$gt: 20},
+            }
+        })
+        assert.equal(res.length, 2)
     })
 
     it("Fuzzy search for name with typo", async() => {
@@ -142,5 +155,18 @@ describe(`Feathers search tests`, () => {
             }
         })
         assert.equal(res.length, 0)
+    })
+    it("Ignore sort when searching", async() => {
+        const res = await service.find({
+            query: {
+                $search: "Bob Harry Smith",
+                $sort: {
+                    name: 1
+                }
+            }
+        })
+        assert.equal(res.length, 2);
+        assert.equal(res[0].name, "Bob Harry Smith")
+        assert.equal(res[1].name, "Adam Harry Smith")
     })  
 })
