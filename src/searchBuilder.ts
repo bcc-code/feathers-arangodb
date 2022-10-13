@@ -2,80 +2,24 @@ import { BadRequest } from '@feathersjs/errors';
 
 import { aql } from "arangojs";
 import { AqlQuery } from "arangojs/aql";
+import { IOptions } from '.';
 
 interface ModifiedQueryType {
   exact: boolean;
   value:string | number;
 }
 
-interface SearchField {
+export interface SearchField {
   name: string;
   isFuzzy: boolean;
   type: 'string' | 'number';
 }
 
-function addSearch(query: string, docName: string = "doc",collection:string = "person") {
-  let searchQuery: AqlQuery | undefined = undefined;
-  switch(collection) {
-    case 'person':
-      searchQuery = personSearch(docName,query);
-      break;
-    case 'country':
-      searchQuery = countrySearch(docName,query);
-      break;
-    case 'org':
-      searchQuery = orgSearch(docName,query);
-      break;
-    case 'application':
-      searchQuery = generateFuzzyStatement([{name:'name', isFuzzy: true, type: 'string'}],query);
-      break;
-    case 'membership_status_read':
-    case 'membership_action_read':
-        searchQuery = membershipSearch(docName,query);
-        break;
-    default:
-      throw new BadRequest('A search has been attempted on a collection where no search logic has been defined')
-  }
-
-  return searchQuery
+export function isQueryTypeCorrect(query: unknown): query is string|number {
+  return ['string', 'number'].includes(typeof query)
 }
 
-const personSearch = (doc: string,query:string) => {
-  const fuzzySearchFields: SearchField[] = [
-    { name: 'fullName', isFuzzy: true, type: 'string'},
-    { name: 'displayName', isFuzzy: true, type: 'string'},
-    { name: 'email', isFuzzy: false, type: 'string'},
-    { name: 'personID', isFuzzy: false, type: 'number'},
-  ];
-  return generateFuzzyStatement(fuzzySearchFields, query);
-}
-
-const countrySearch = (doc: string,query:string) => {
-  const fuzzySearchFields: SearchField[] = [
-    {name:'nameEn', isFuzzy: true, type: 'string'},
-    {name:'nameNo', isFuzzy: true, type: 'string'},
-    {name: 'countryID', isFuzzy: false, type: 'number'},
-  ];
-  return generateFuzzyStatement(fuzzySearchFields, query);
-}
-
-const orgSearch = (doc: string,query:string) => {
-  const fuzzySearchFields: SearchField[] = [
-    {name:'name', isFuzzy: true, type: 'string'},
-    {name: 'orgID', isFuzzy: false, type: 'number'},
-  ];
-  return generateFuzzyStatement(fuzzySearchFields, query);
-}
-
-const membershipSearch = (doc: string,query:string) => {
-  const fuzzySearchFields: SearchField[] = [
-    {name:'applicantName', isFuzzy: true, type: 'string'},
-    {name: 'applicantID', isFuzzy: false, type: 'number'},
-  ];
-  return generateFuzzyStatement(fuzzySearchFields, query);
-}
-
-function generateFuzzyStatement(fields:SearchField[], query:any): AqlQuery | undefined{
+export function generateFuzzyStatement(fields:SearchField[], query:string|number): AqlQuery | undefined{
   const modifiedQuery:ModifiedQueryType = determineQueryType(query);
   const searchStatements:AqlQuery[] = [];
 
@@ -90,12 +34,8 @@ function generateFuzzyStatement(fields:SearchField[], query:any): AqlQuery | und
   if(!searchStatements.length) return undefined;
 
   const searchConditions = aql.join(searchStatements, ' OR ');
-  const result = aql.join([
-    aql.literal("SEARCH"),
-    searchConditions,
-    aql`SORT BM25(doc) desc`,
-  ])
-  return result;
+
+  return searchConditions;
 }
 
 function getSearchStatement(field: SearchField, query:ModifiedQueryType):AqlQuery | undefined{
@@ -111,8 +51,6 @@ function getSearchStatement(field: SearchField, query:ModifiedQueryType):AqlQuer
 }
 
 function determineQueryType(value:string|number):ModifiedQueryType {
-  if(!['string', 'number'].includes(typeof value)) throw new BadRequest('Invalid query type');
-
   let exact = false;
   if(typeof value === 'string' && hasQuotes(value)){
       value = value.slice(1, -1);
@@ -130,7 +68,3 @@ const hasQuotes = (string: string) => {
   return false;
 }
 
-
-export {
-    addSearch
-}

@@ -24,6 +24,7 @@ import { isArangoTransaction, Transaction } from "arangojs/transaction";
 import { isArangoError } from "arangojs/error";
 import { RetryDatabase } from "./retry-database";
 import { AutoDatabse } from "./auto-database";
+import { SearchField } from "./searchBuilder";
 
 export declare type ArangoDbConfig =
   | string
@@ -83,6 +84,7 @@ export interface IOptions {
   username?: string;
   password?: string;
   token?: string;
+  searchFields?: SearchField[]
   dbConfig?: Config;
   events?: any[];
   paginate?: Paginate;
@@ -363,29 +365,19 @@ export class DbService<T> {
     let { database, collection, view} = await this.connect();
     params = this._injectPagination(params);
 
-    let queryBuilder =new QueryBuilder(params,collection.name);
+    let queryBuilder =new QueryBuilder(params,"doc", "doc", this.options.searchFields);
     if (existingQuery) {
       queryBuilder =  existingQuery
     }
 
     const query = aql.join(
       [
-        queryBuilder.withStatement
-        ? queryBuilder.withStatement
-        : aql``,
-        queryBuilder.tokensStatement
-        ? queryBuilder.tokensStatement
-        : aql``,
-        aql`FOR doc in ${queryBuilder.search ? view : collection}`,
-        queryBuilder.search
-          ? aql.join([aql``, queryBuilder.search], " ")
-          : aql``,
-        queryBuilder.filter
-          ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
-          : aql``,
-        queryBuilder.sort
-          ? aql.join([aql`SORT`, queryBuilder.sort], " ")
-          : aql``,
+        queryBuilder.withStatement,
+        queryBuilder.tokensStatement,
+        aql`FOR doc in ${view ?? collection}`,
+        queryBuilder.search,
+        queryBuilder.filter,
+        queryBuilder.sort,
         queryBuilder.limit,
         queryBuilder.returnFilter,
       ],
@@ -424,7 +416,7 @@ export class DbService<T> {
     }
 
     const addedfilter = queryBuilder._aqlFilterFromFeathersQuery({_key: id}, aql`doc`);
-    queryBuilder.filter = queryBuilder._joinAqlFiltersWithOperator([queryBuilder.filter, addedfilter], LogicalOperator.And)
+    queryBuilder._filter = queryBuilder._joinAqlFiltersWithOperator([queryBuilder._filter, addedfilter], LogicalOperator.And)
 
     const query: AqlQuery = aql.join(
       [
@@ -432,9 +424,7 @@ export class DbService<T> {
         ? queryBuilder.withStatement
         : aql``,
         aql`FOR doc IN ${collection}`,
-        queryBuilder.filter
-          ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
-          : aql``,
+        queryBuilder.filter,
         queryBuilder.returnFilter,
       ],
       " "
@@ -468,7 +458,7 @@ export class DbService<T> {
     const { database, collection } = await this.connect();
     const ids: NullableId[] = Array.isArray(id) ? id : [id];
     let query: AqlQuery;
-    const queryBuilder = new QueryBuilder(params, "", "doc", "changed");
+    const queryBuilder = new QueryBuilder(params, "doc", "changed");
     if (ids.length > 0 && (ids[0] != null || ids[0] != undefined)) {
       
       query = aql.join(
@@ -485,9 +475,7 @@ export class DbService<T> {
       query = aql.join(
         [
           aql`FOR doc IN ${collection}`,
-          queryBuilder.filter
-            ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
-            : aql``,
+          queryBuilder.filter,
           aql.literal(`${fOpt}`),
           aql`doc WITH ${data} IN ${collection}`,
           aql`LET changed = NEW`,
@@ -528,7 +516,7 @@ export class DbService<T> {
     }
     // Build query
     let query: AqlQuery;
-    const queryBuilder = new QueryBuilder(params, "", "doc", "removed");
+    const queryBuilder = new QueryBuilder(params, "doc", "removed");
     if (id && (!Array.isArray(id) || (Array.isArray(id) && id.length > 0))) {
       query = aql`
         FOR doc IN ${ids}
@@ -540,9 +528,7 @@ export class DbService<T> {
       query = aql.join(
         [
           aql`FOR doc IN ${collection}`,
-          queryBuilder.filter
-            ? aql.join([aql`FILTER`, queryBuilder.filter], " ")
-            : aql``,
+          queryBuilder.filter,
           aql`REMOVE doc IN ${collection}`,
           aql`LET removed = OLD`,
           queryBuilder.returnFilter,
