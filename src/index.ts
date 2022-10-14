@@ -84,7 +84,8 @@ export interface IOptions {
   username?: string;
   password?: string;
   token?: string;
-  searchFields?: SearchField[]
+  searchFields?: SearchField[];
+  enforceViewForFindQueries?: boolean;
   dbConfig?: Config;
   events?: any[];
   paginate?: Paginate;
@@ -370,10 +371,12 @@ export class DbService<T> {
       queryBuilder =  existingQuery
     }
 
+    let useView = queryBuilder._search || this.options.enforceViewForFindQueries;
+
     const query = aql.join(
       [
-        aql`FOR doc in ${view ?? collection}`,
-        queryBuilder.filter ? (view ? aql`SEARCH` : aql`FILTER`) : aql``,
+        aql`FOR doc in ${useView ?  view : collection}`,
+        queryBuilder.filter ? (useView ? aql`SEARCH` : aql`FILTER`) : aql``,
         queryBuilder.filter ?? aql``,
         queryBuilder.sort,
         queryBuilder.limit,
