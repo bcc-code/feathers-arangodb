@@ -7,12 +7,13 @@ import { Params } from "@feathersjs/feathers";
 import { aql } from "arangojs";
 import { AqlQuery, AqlValue, GeneratedAqlQuery } from "arangojs/aql";
 import { AqlLiteral } from "arangojs/aql";
-import { addSearch } from "./searchBuilder"
+import { generateFuzzyStatement, isQueryTypeCorrect, SearchField } from "./searchBuilder"
 import logger from "./logger";
+import { BadRequest } from "@feathersjs/errors";
 
 export enum LogicalOperator {
-  And = " AND ",
-  Or = " OR "
+    And = " AND ",
+    Or = " OR "
 }
 
 export class QueryBuilder {
@@ -40,35 +41,37 @@ export class QueryBuilder {
   maxLimit = 1000000000; // A billion records...
   _limit: number = -1;
   _countNeed: string = "";
-  _skip: number = 0;
-  sort?: AqlQuery;
-  filter?: AqlQuery;
+  _skip: number = 0;;
+  _search?: AqlQuery;
+  _sort?: AqlQuery;
+  searchFields: SearchField[];
+  _filter?: AqlQuery;
+  docName = "doc";
+  returnDocName = "doc";
   returnFilter?: AqlQuery | AqlLiteral;
-  withStatement?: AqlQuery;
-  tokensStatement?: AqlQuery;
-  _collection: string;
-  search?: AqlQuery;
   varCount: number = 0;
 
   constructor(
     params: Params,
-    collectionName: string = "",
     docName: string = "doc",
-    returnDocName: string = "doc"
+    returnDocName: string = "doc",
+    searchFields: SearchField[] = []
   ) {
-    this._collection = collectionName;
-    this.create(params, docName, returnDocName);
+    this.searchFields = searchFields
+    this.docName = docName
+    this.returnDocName = returnDocName
+    this.create(params);
   }
 
-  getParameterizedPath(path: string, docName:string = 'doc'): GeneratedAqlQuery {
+  getParameterizedPath(path: string, basePath: string): GeneratedAqlQuery {
     const pathArray = path.split('.').map((field:string) => aql`[${field}]`)
     return aql.join([
-      aql.literal(docName),
+      aql.literal(basePath),
       ...pathArray
     ], '')
   }
 
-  projectRecursive(o: object, docName: string): AqlValue {
+  projectRecursive(o: object): AqlValue {
     const result = Object.keys(o).map((field: string, ind: number) => {
       const v: any = _get(o, field);
       return aql.join(
@@ -77,10 +80,10 @@ export class QueryBuilder {
           _isObject(v)
             ? aql.join([
               aql.literal("{"),
-              this.projectRecursive(v, docName),
+              this.projectRecursive(v),
               aql.literal("}"),
             ])
-            : this.getParameterizedPath(v, docName),
+            : this.getParameterizedPath(v, this.returnDocName),
         ],
         " "
       );
@@ -89,11 +92,11 @@ export class QueryBuilder {
     return aql.join(result, ", ");
   }
 
-  selectBuilder(params: Params, docName: string = "doc"): AqlQuery | AqlLiteral {
+  selectBuilder(params: Params): AqlQuery | AqlLiteral {
     const select:string[] | undefined = params.query?.$select
 
     if(!select?.length)
-      return aql.literal(`RETURN ${docName}`);
+      return aql.literal(`RETURN ${this.returnDocName}`);
 
     const ret = { };
     select.forEach((fieldName: string) => {
@@ -103,7 +106,7 @@ export class QueryBuilder {
     return aql.join(
       [
         aql`RETURN {`,
-        this.projectRecursive(ret, docName),
+        this.projectRecursive(ret),
         aql`}`,
       ],
       " "
@@ -112,45 +115,23 @@ export class QueryBuilder {
 
   create(
     params: Params,
-    docName: string = "doc",
-    returnDocName: string = "doc"
   ): QueryBuilder {
-    this.returnFilter = this.selectBuilder(params, returnDocName);
+    this.returnFilter = this.selectBuilder(params);
     const query = _get(params, "query", null);
     logger.debug("Query object received from client:", query)
-    this._runCheck(query, docName, returnDocName);
+    this._runCheck(query);
     return this;
   }
 
   _runCheck(
-    query: any,
-    docName: string = "doc",
-    returnDocName: string = "doc",
+    query: unknown,
   ) {
-    if (!query || _isEmpty(query)) return this;
-    const queryParamaters = Object.keys(query)
-    queryParamaters.forEach((key: string) => {
-      const testKey = key.toLowerCase();
-      const value = query[key];
-      switch (testKey) {
-        case "$select":
-        case "$resolve":
-          break;
-        case "$limit":
-          this._limit = parseInt(value);
-          break;
-        case "$skip":
-          this._skip = parseInt(value);
-          break;
-        case "$sort":
-          this.addSort(value, docName);
-          break;
-        case "$search":
-          this.search = addSearch(value, docName, this._collection);
-          break;
-      }
-    });
-    this.filter = this._aqlFilterFromFeathersQuery(query, aql.literal(docName))
+    if(!isQueryObject(query)) return this;
+    if (query.$limit !== undefined) this._limit = parseIntTypeSafe(query.$limit)
+    if (query.$skip !== undefined) this._skip = parseIntTypeSafe(query.$skip)
+    if (query.$sort !== undefined) this._sort = this.addSort(query.$sort)
+    if (query.$search !== undefined) this._search = this.addSearch(this.searchFields, query.$search)
+    this._filter = this._aqlFilterFromFeathersQuery(query, aql.literal(this.docName))
   }
 
   _aqlFilterFromFeathersQuery(
@@ -222,23 +203,69 @@ export class QueryBuilder {
     return aql`(${combined})`
   }
 
-  get limit(): AqlValue {
-    if (this._limit === -1 && this._skip === 0) return aql.literal("");
-    const realLimit = this._limit > -1 ? this._limit : this.maxLimit;
-    return aql`LIMIT ${this._skip}, ${realLimit}`;
-  }
-
-  addSort(sort: any, docName: string = "doc") {
+  addSort(sort: unknown): AqlQuery | undefined {
+    if(!isQueryObject(sort)) throw new BadRequest("Sort has incorrect type")
     if (Object.keys(sort).length > 0) {
-      this.sort = aql.join(
+      return aql.join(
         Object.keys(sort).map((key: string) => {
           return aql.join([
-            this.getParameterizedPath(key, docName),
-            aql.literal(parseInt(sort[key]) === -1 ? "DESC" : "")
+            this.getParameterizedPath(key, this.docName),
+            aql.literal(parseIntTypeSafe(sort[key]) === -1 ? "DESC" : "")
           ], ' ');
         }),
         ", "
       );
     }
   }
+
+  addSearch( searchFields: SearchField[], search: unknown) {
+    if(!searchFields.length)
+    throw new BadRequest('A search has been attempted on a collection where no search logic has been defined')
+  
+    if(!isQueryTypeCorrect(search)){
+      throw new BadRequest('Invalid query type');
+    }
+
+    return generateFuzzyStatement(searchFields, search)
+  }
+  get limit(): AqlQuery {
+    if (this._limit === -1 && this._skip === 0) return aql``
+    const realLimit = this._limit > -1 ? this._limit : this.maxLimit;
+    return aql`LIMIT ${this._skip}, ${realLimit}`;
+  }
+
+  get sort(): AqlQuery {
+    if (this._search) {
+      return aql`SORT BM25(${aql.literal(this.docName)}) desc`
+    }
+    if (this._sort) {
+      return aql`SORT ${this._sort}`
+    }
+    return aql``
+  }
+
+  get filter(): AqlQuery | undefined {
+    const filterParts:AqlQuery[] = []
+    if(this._search) {
+      filterParts.push(aql`(${this._search})`)
+    }
+    if(this._filter) {
+      filterParts.push(aql`(${this._filter})`)
+    }
+    if(!filterParts.length)
+      return undefined
+    return aql.join(filterParts, LogicalOperator.And)
+  }
+
+}
+
+function isQueryObject(query: unknown): query is Record<string, unknown>{
+  if(!query) return false
+  return typeof query === "object"
+}
+
+function parseIntTypeSafe(value: unknown):number {
+  if(typeof value === "number") return value
+  if(typeof value !== "string") return NaN;
+  return parseInt(value);
 }
