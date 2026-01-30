@@ -8,15 +8,17 @@ on:
 jobs:
   publish-gpr:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for OIDC
+      contents: read
     steps:
-      - uses: actions/checkout/@v2
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout/@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: "16.x"
+          node-version: "24.x"
           registry-url: 'https://registry.npmjs.org'
           scope: "@bcc-code"
-      - run: npm install
+      - run: npm install -g npm@latest # Required for trusted publishing (npm 11.5.1 or later)
+      - run: npm ci --include=dev
       - run: npm run build
       - run: npm publish --tag latest --access public
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
